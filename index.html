@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel — Tamu Undangan</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    :root {
+      --bg:#f4f1ec; --surface:#ffffff; --surface2:#faf8f4; --border:#e8e2d9;
+      --ink:#1c1917; --ink-2:#57534e; --ink-3:#a8a29e;
+      --accent:#c2410c; --accent-bg:#fff3ee;
+      --green:#15803d; --green-bg:#f0fdf4;
+      --amber:#b45309; --amber-bg:#fffbeb;
+      --blue:#1d4ed8; --blue-bg:#eff6ff;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+    .font-display{font-family:'Fraunces',serif}
+
+    /* LOGIN */
+    #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--ink);position:relative;overflow:hidden}
+    #login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 600px 400px at 20% 50%,rgba(194,65,12,.18) 0%,transparent 70%),radial-gradient(ellipse 500px 500px at 80% 20%,rgba(194,65,12,.08) 0%,transparent 70%)}
+    .login-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(20px);border-radius:24px;padding:48px 40px;width:100%;max-width:420px;margin:20px;position:relative;z-index:1}
+    .login-input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:14px 18px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;color:#fff;outline:none;transition:all .2s}
+    .login-input::placeholder{color:rgba(255,255,255,.3)}
+    .login-input:focus{border-color:var(--accent);background:rgba(255,255,255,.09);box-shadow:0 0 0 3px rgba(194,65,12,.2)}
+    .btn-login{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px rgba(194,65,12,.4)}
+    .btn-login:hover{background:#b03a0a;transform:translateY(-1px)}
+    .login-error{background:rgba(194,65,12,.15);border:1px solid rgba(194,65,12,.3);color:#fca5a5;border-radius:10px;padding:10px 14px;font-size:13px;display:none}
+
+    /* SIDEBAR */
+    #sidebar{position:fixed;left:0;top:0;bottom:0;width:240px;background:var(--ink);z-index:40;display:flex;flex-direction:column;transition:transform .3s ease}
+    .sidebar-logo{padding:28px 24px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;color:rgba(255,255,255,.45);font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left}
+    .nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
+    .nav-item.active{background:rgba(194,65,12,.2);color:#fff}
+    .nav-item svg{width:18px;height:18px;flex-shrink:0}
+    .nav-section-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.25);padding:12px 14px 6px}
+    .sidebar-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,.08)}
+    .live-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#4ade80;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);border-radius:999px;padding:4px 10px}
+    .live-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:blink 1.4s ease infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+    /* MAIN */
+    #main-content{margin-left:240px;min-height:100vh;transition:margin .3s}
+    .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:30}
+    .page{display:none;padding:28px}
+    .page.active{display:block}
+
+    /* STAT CARDS */
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 22px;position:relative;overflow:hidden}
+    .stat-card::after{content:'';position:absolute;right:-10px;top:-10px;width:80px;height:80px;border-radius:50%;opacity:.06}
+    .stat-card.orange::after{background:#f97316}
+    .stat-card.green::after{background:#22c55e}
+    .stat-card.blue::after{background:#3b82f6}
+    .stat-card.amber::after{background:#f59e0b}
+    .stat-num{font-family:'Fraunces',serif;font-size:36px;font-weight:700;line-height:1}
+    .stat-label{font-size:12px;font-weight:600;color:var(--ink-2);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+    .stat-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+
+    /* TABLE */
+    .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+    .table-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap}
+    .search-box{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;min-width:220px}
+    .search-box input{background:none;border:none;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--ink);width:100%}
+    .search-box input::placeholder{color:var(--ink-3)}
+    table{width:100%;border-collapse:collapse}
+    thead th{background:var(--surface2);padding:12px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);border-bottom:1px solid var(--border)}
+    tbody td{padding:13px 16px;font-size:13.5px;color:var(--ink);border-bottom:1px solid var(--border);vertical-align:middle}
+    tbody tr:last-child td{border-bottom:none}
+    tbody tr:hover{background:var(--surface2)}
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700}
+    .badge.hadir{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0}
+    .badge.belum{background:var(--amber-bg);color:var(--amber);border:1px solid #fde68a}
+    .badge.id{background:var(--blue-bg);color:var(--blue);border:1px solid #bfdbfe;font-family:monospace}
+
+    /* BUTTONS */
+    .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer;border:none;transition:all .18s}
+    .btn-primary{background:var(--accent);color:#fff;box-shadow:0 2px 10px rgba(194,65,12,.3)}
+    .btn-primary:hover{background:#b03a0a;transform:translateY(-1px)}
+    .btn-ghost{background:var(--surface2);color:var(--ink-2);border:1px solid var(--border)}
+    .btn-ghost:hover{background:var(--border);color:var(--ink)}
+    .btn-danger{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+    .btn-danger:hover{background:#fee2e2}
+    .btn-green{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0}
+    .btn-green:hover{background:#dcfce7}
+    .btn-checkin{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0;padding:6px 12px;font-size:12px}
+    .btn-checkin:hover{background:#dcfce7}
+    .btn-undo{background:var(--amber-bg);color:var(--amber);border:1px solid #fde68a;padding:6px 12px;font-size:12px}
+    .btn-undo:hover{background:#fef3c7}
+    .btn-flip{background:#1c1917;color:#fff;border:1px solid #3d3834}
+    .btn-flip:hover{background:#2d2926}
+
+    /* FILTER TABS */
+    .filter-tabs{display:flex;gap:6px;flex-wrap:wrap}
+    .ftab{padding:6px 16px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--ink-2);transition:all .15s}
+    .ftab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+    /* PROGRESS */
+    .progress-bar{height:8px;background:var(--border);border-radius:999px;overflow:hidden;margin-top:6px}
+    .progress-fill{height:100%;border-radius:999px;transition:width .6s ease}
+
+    /* TOAST */
+    #toast{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;align-items:center;gap:10px;padding:13px 20px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.15);transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);max-width:320px}
+    #toast.show{transform:translateY(0);opacity:1}
+    #toast.success{background:#fff;color:var(--green);border:1px solid #bbf7d0}
+    #toast.error{background:#fff;color:#dc2626;border:1px solid #fecaca}
+    #toast.info{background:#fff;color:var(--blue);border:1px solid #bfdbfe}
+
+    /* MODAL */
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:50;align-items:center;justify-content:center;padding:20px}
+    .modal-bg.open{display:flex}
+    .modal-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:480px;animation:popIn .25s ease}
+    @keyframes popIn{from{transform:scale(.93);opacity:0}to{transform:scale(1);opacity:1}}
+
+    /* SCANNER */
+    #scanner-video{width:100%;border-radius:12px;background:#000;display:block;aspect-ratio:4/3;max-height:320px;object-fit:cover;}
+    .scan-overlay{position:relative;border-radius:12px;overflow:hidden}
+    .scan-line{position:absolute;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,#22c55e,transparent);animation:scanAnim 2s ease-in-out infinite;top:50%}
+    @keyframes scanAnim{0%{top:20%;opacity:1}100%{top:80%;opacity:.5}}
+    .scan-corner{position:absolute;width:28px;height:28px;border-color:#22c55e;border-style:solid;border-width:0}
+    .scan-corner.tl{top:12px;left:12px;border-top-width:3px;border-left-width:3px;border-radius:4px 0 0 0}
+    .scan-corner.tr{top:12px;right:12px;border-top-width:3px;border-right-width:3px;border-radius:0 4px 0 0}
+    .scan-corner.bl{bottom:12px;left:12px;border-bottom-width:3px;border-left-width:3px;border-radius:0 0 0 4px}
+    .scan-corner.br{bottom:12px;right:12px;border-bottom-width:3px;border-right-width:3px;border-radius:0 0 4px 0}
+
+    /* MISC */
+    .fade-in{animation:fadeUp .4s ease forwards}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    #sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:35}
+
+    @media(max-width:900px){
+      #sidebar{transform:translateX(-100%)}
+      #sidebar.open{transform:translateX(0)}
+      #sidebar-overlay.open{display:block}
+      #main-content{margin-left:0}
+      .stat-grid{grid-template-columns:repeat(2,1fr)}
+      .page{padding:16px}
+      .topbar{padding:12px 16px}
+    }
+    @media(max-width:480px){
+      .stat-grid{grid-template-columns:1fr 1fr;gap:10px}
+      .login-card{padding:32px 24px}
+    }
+
+    .row-actions{display:flex;gap:6px;flex-wrap:wrap}
+    .icon-btn{width:30px;height:30px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--ink-2);transition:all .15s}
+    .icon-btn:hover{background:var(--border);color:var(--ink)}
+    .icon-btn.danger:hover{background:#fee2e2;color:#dc2626;border-color:#fecaca}
+    .empty-state{text-align:center;padding:60px 20px;color:var(--ink-3)}
+    .checkin-form-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:all .2s}
+    .checkin-form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(194,65,12,.1)}
+
+    /* Scanner unsupported warning */
+    .warn-box{background:var(--amber-bg);border:1px solid #fde68a;border-radius:12px;padding:16px;font-size:13px;color:var(--amber);line-height:1.6;margin-bottom:12px}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen" style="display:none;">
+  <div class="login-card">
+    <div class="text-center" style="margin-bottom:32px;">
+      <div style="width:52px;height:52px;background:var(--accent);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+        <svg width="26" height="26" fill="none" stroke="white" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </div>
+      <h1 class="font-display" style="font-size:28px;color:#fff;">Admin Panel</h1>
+      <p style="color:rgba(255,255,255,.4);font-size:14px;margin-top:6px;">Sistem Registrasi Tamu Undangan</p>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="display:block;font-size:12px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:8px;">Username</label>
+      <input type="text" id="login-user" class="login-input" placeholder="admin" />
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:block;font-size:12px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:8px;">Password</label>
+      <input type="password" id="login-pass" class="login-input" placeholder="••••••••" />
+    </div>
+    <div id="login-error" class="login-error" style="margin-bottom:16px;">Username atau password salah. Coba lagi.</div>
+    <button class="btn-login" onclick="doLogin()">Masuk ke Dashboard</button>
+    <p style="text-align:center;font-size:11px;color:rgba(255,255,255,.2);margin-top:20px;">Default: admin / admin123</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:block;">
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <nav id="sidebar">
+    <div class="sidebar-logo">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:34px;height:34px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="18" height="18" fill="none" stroke="white" stroke-width="2.2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div>
+          <div style="font-family:'Fraunces',serif;color:#fff;font-size:16px;line-height:1.1;">Tamu Panel</div>
+          <div style="color:rgba(255,255,255,.35);font-size:11px;">Admin Dashboard</div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <button class="nav-item active" onclick="showPage('dashboard')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard
+      </button>
+      <button class="nav-item" onclick="showPage('guests')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Data Tamu
+      </button>
+      <button class="nav-item" onclick="showPage('checkin')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Data Check-in
+      </button>
+      <button class="nav-item" onclick="showPage('scanner')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>Scan QR Check-in
+      </button>
+      <button class="nav-item" onclick="showPage('export')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export Data
+      </button>
+      <div class="nav-section-label" style="margin-top:12px;">Sistem</div>
+      <button class="nav-item" onclick="showPage('settings')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>Pengaturan
+      </button>
+    </div>
+    <div class="sidebar-footer">
+      <div class="live-badge" style="margin-bottom:10px;"><span class="live-dot"></span> Live Realtime</div>
+      <button class="nav-item" onclick="doLogout()" style="color:#f87171;">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Keluar
+      </button>
+    </div>
+  </nav>
+
+  <div id="main-content">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button id="sidebar-toggle" onclick="toggleSidebar()" style="display:none;background:none;border:none;cursor:pointer;padding:4px;">
+          <svg width="22" height="22" fill="none" stroke="var(--ink)" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div>
+          <h2 id="page-title" class="font-display" style="font-size:20px;color:var(--ink);">Dashboard</h2>
+          <p style="font-size:12px;color:var(--ink-3);" id="last-update">Memuat data...</p>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="text-align:right;">
+          <div style="font-size:13px;font-weight:700;color:var(--ink);">Admin</div>
+          <div style="font-size:11px;color:var(--ink-3);" id="topbar-time">—</div>
+        </div>
+        <div style="width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <svg width="18" height="18" fill="none" stroke="white" stroke-width="2.2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stat-grid fade-in">
+        <div class="stat-card orange">
+          <div class="stat-icon" style="background:var(--accent-bg);color:var(--accent);"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+          <div class="stat-num" style="color:var(--accent)" id="s-total">0</div>
+          <div class="stat-label">Total Terdaftar</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon" style="background:var(--green-bg);color:var(--green);"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+          <div class="stat-num" style="color:var(--green)" id="s-hadir">0</div>
+          <div class="stat-label">Sudah Hadir</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-icon" style="background:var(--amber-bg);color:var(--amber);"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          <div class="stat-num" style="color:var(--amber)" id="s-belum">0</div>
+          <div class="stat-label">Belum Hadir</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon" style="background:var(--blue-bg);color:var(--blue);"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+          <div class="stat-num" style="color:var(--blue)" id="s-pct">0%</div>
+          <div class="stat-label">Tingkat Kehadiran</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="fade-in" id="dash-grid">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;">
+          <h3 style="font-family:'Fraunces',serif;font-size:18px;margin-bottom:20px;">Tingkat Kehadiran</h3>
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <span style="font-size:13px;font-weight:600;color:var(--green);">● Hadir</span>
+              <span style="font-size:13px;font-weight:700;" id="bar-hadir-num">0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-hadir" style="background:var(--green);width:0%;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <span style="font-size:13px;font-weight:600;color:var(--amber);">● Belum Hadir</span>
+              <span style="font-size:13px;font-weight:700;" id="bar-belum-num">0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-belum" style="background:var(--amber);width:100%;"></div></div>
+          </div>
+          <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;color:var(--ink-2);">Total Undangan</span>
+            <span style="font-family:'Fraunces',serif;font-size:28px;color:var(--ink);" id="bar-total">0</span>
+          </div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;">
+          <h3 style="font-family:'Fraunces',serif;font-size:18px;margin-bottom:16px;">Pendaftaran Terbaru</h3>
+          <div id="recent-list" style="display:flex;flex-direction:column;gap:8px;">
+            <div style="text-align:center;padding:20px;color:var(--ink-3);font-size:13px;">Memuat...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATA TAMU -->
+    <div class="page" id="page-guests">
+      <div class="table-wrap fade-in">
+        <div class="table-head">
+          <div>
+            <h3 style="font-family:'Fraunces',serif;font-size:18px;">Semua Data Tamu</h3>
+            <p style="font-size:12px;color:var(--ink-3);margin-top:2px;" id="guests-count">0 tamu terdaftar</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <div class="search-box">
+              <svg width="14" height="14" fill="none" stroke="var(--ink-3)" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="guest-search" placeholder="Cari tamu..." oninput="filterGuests()" />
+            </div>
+            <div class="filter-tabs">
+              <button class="ftab active" onclick="setFilter('all',this)">Semua</button>
+              <button class="ftab" onclick="setFilter('hadir',this)">Hadir</button>
+              <button class="ftab" onclick="setFilter('belum',this)">Belum</button>
+            </div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th style="width:44px;">#</th><th>Nama Lengkap</th><th>Instansi / Asal</th><th>No. WhatsApp</th><th>ID Tamu</th><th>Status</th><th>Waktu Daftar</th><th style="min-width:120px;">Aksi</th></tr></thead>
+            <tbody id="guest-tbody"><tr><td colspan="8"><div class="empty-state"><p>Memuat data...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHECK-IN -->
+    <div class="page" id="page-checkin">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:16px;" class="fade-in">
+        <h3 style="font-family:'Fraunces',serif;font-size:18px;margin-bottom:6px;">Check-in Manual</h3>
+        <p style="font-size:13px;color:var(--ink-2);margin-bottom:16px;">Masukkan ID Tamu atau nama untuk melakukan check-in</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <input type="text" id="manual-checkin-input" class="checkin-form-input" style="flex:1;min-width:200px;" placeholder="ID Tamu atau nama..." />
+          <button class="btn btn-green" onclick="doManualCheckin()">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Check-in
+          </button>
+        </div>
+        <div id="manual-checkin-result" style="margin-top:12px;display:none;"></div>
+      </div>
+      <div class="table-wrap fade-in">
+        <div class="table-head">
+          <div>
+            <h3 style="font-family:'Fraunces',serif;font-size:18px;">Data Tamu Hadir</h3>
+            <p style="font-size:12px;color:var(--ink-3);margin-top:2px;" id="checkin-count">0 tamu hadir</p>
+          </div>
+          <div class="search-box">
+            <svg width="14" height="14" fill="none" stroke="var(--ink-3)" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="checkin-search" placeholder="Cari tamu hadir..." oninput="filterCheckin()" />
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th style="width:44px;">#</th><th>Nama Lengkap</th><th>Instansi / Asal</th><th>No. WhatsApp</th><th>ID Tamu</th><th>Waktu Check-in</th><th style="width:80px;">Aksi</th></tr></thead>
+            <tbody id="checkin-tbody"><tr><td colspan="7"><div class="empty-state"><p>Belum ada tamu yang check-in</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCAN QR -->
+    <div class="page" id="page-scanner">
+      <div style="max-width:520px;margin:0 auto;" class="fade-in">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:16px;">
+          <h3 style="font-family:'Fraunces',serif;font-size:20px;margin-bottom:6px;">Scan QR Code Tamu</h3>
+          <p style="font-size:13px;color:var(--ink-2);margin-bottom:20px;line-height:1.6;">Arahkan kamera ke QR Code tamu untuk melakukan check-in otomatis</p>
+
+          <!-- Warning jika browser tidak support -->
+          <div id="scanner-unsupported" class="warn-box" style="display:none;">
+            ⚠ Browser ini tidak mendukung scan otomatis.<br>
+            Gunakan <strong>Chrome</strong> atau <strong>Edge</strong> versi terbaru di Android/Desktop.<br>
+            Atau gunakan fitur <strong>Check-in Manual</strong> di menu sebelah.
+          </div>
+
+          <!-- Kamera aktif -->
+          <div id="scanner-container" style="display:none;">
+            <div class="scan-overlay" style="margin-bottom:12px;">
+              <video id="scanner-video" autoplay playsinline muted></video>
+              <div class="scan-line"></div>
+              <div class="scan-corner tl"></div><div class="scan-corner tr"></div>
+              <div class="scan-corner bl"></div><div class="scan-corner br"></div>
+            </div>
+            <div id="camera-label" style="text-align:center;font-size:12px;color:var(--ink-3);margin-bottom:10px;">📷 Kamera Belakang</div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-flip" onclick="flipCamera()" style="flex:1;justify-content:center;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/></svg>
+                Balik Kamera
+              </button>
+              <button class="btn btn-danger" onclick="stopScanner()" style="flex:1;justify-content:center;">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                Stop Kamera
+              </button>
+            </div>
+          </div>
+
+          <!-- Tombol mulai -->
+          <div id="scanner-start">
+            <button class="btn btn-green" id="btn-start-scan" onclick="startScanner()" style="width:100%;justify-content:center;padding:14px;">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
+              Mulai Scan Kamera
+            </button>
+          </div>
+        </div>
+
+        <!-- Hasil scan -->
+        <div id="scan-result-box" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;">
+          <h4 style="font-family:'Fraunces',serif;font-size:16px;margin-bottom:14px;" id="scan-result-title">Hasil Scan</h4>
+          <div id="scan-result-content"></div>
+        </div>
+
+        <!-- Log scan -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-top:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h4 style="font-family:'Fraunces',serif;font-size:16px;">Riwayat Scan Sesi Ini</h4>
+            <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px;" onclick="clearScanLog()">Bersihkan</button>
+          </div>
+          <div id="scan-log" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;">
+            <div style="text-align:center;padding:16px;color:var(--ink-3);font-size:13px;">Belum ada scan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="page" id="page-export">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;" class="fade-in">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;">
+          <div style="width:44px;height:44px;background:var(--green-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><svg width="22" height="22" fill="none" stroke="var(--green)" stroke-width="2.2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <h3 style="font-family:'Fraunces',serif;font-size:18px;margin-bottom:6px;">Export Semua Tamu</h3>
+          <p style="font-size:13px;color:var(--ink-2);margin-bottom:20px;line-height:1.6;">Ekspor seluruh data tamu ke format Excel .xlsx</p>
+          <button class="btn btn-green" onclick="exportAll()" style="width:100%;justify-content:center;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download Semua Tamu</button>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;">
+          <div style="width:44px;height:44px;background:var(--green-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><svg width="22" height="22" fill="none" stroke="var(--green)" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+          <h3 style="font-family:'Fraunces',serif;font-size:18px;margin-bottom:6px;">Export Tamu Hadir</h3>
+          <p style="font-size:13px;color:var(--ink-2);margin-bottom:20px;line-height:1.6;">Ekspor data tamu yang sudah check-in</p>
+          <button class="btn btn-green" onclick="exportHadir()" style="width:100%;justify-content:center;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download Tamu Hadir</button>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;">
+          <div style="width:44px;height:44px;background:var(--amber-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><svg width="22" height="22" fill="none" stroke="var(--amber)" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          <h3 style="font-family:'Fraunces',serif;font-size:18px;margin-bottom:6px;">Export Tamu Absen</h3>
+          <p style="font-size:13px;color:var(--ink-2);margin-bottom:20px;line-height:1.6;">Ekspor daftar tamu yang belum check-in</p>
+          <button class="btn" onclick="exportBelum()" style="width:100%;justify-content:center;background:var(--amber-bg);color:var(--amber);border:1px solid #fde68a;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download Tamu Absen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div style="max-width:560px;" class="fade-in">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:16px;">
+          <h3 style="font-family:'Fraunces',serif;font-size:18px;margin-bottom:20px;">Ganti Password Admin</h3>
+          <div style="margin-bottom:12px;">
+            <label style="display:block;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--ink-2);text-transform:uppercase;margin-bottom:7px;">Password Lama</label>
+            <input type="password" id="old-pass" class="checkin-form-input" placeholder="Masukkan password lama..." />
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--ink-2);text-transform:uppercase;margin-bottom:7px;">Password Baru</label>
+            <input type="password" id="new-pass" class="checkin-form-input" placeholder="Password baru (min. 6 karakter)..." />
+          </div>
+          <button class="btn btn-primary" onclick="changePassword()">Simpan Password</button>
+        </div>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:16px;padding:28px;">
+          <h3 style="font-family:'Fraunces',serif;font-size:18px;color:#dc2626;margin-bottom:8px;">Zona Bahaya</h3>
+          <p style="font-size:13px;color:#991b1b;margin-bottom:16px;line-height:1.6;">Aksi berikut bersifat permanen dan tidak dapat dibatalkan.</p>
+          <button class="btn btn-danger" onclick="confirmReset()">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>Hapus Semua Data Tamu
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="detail-modal">
+  <div class="modal-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h3 style="font-family:'Fraunces',serif;font-size:20px;">Detail Tamu</h3>
+      <button onclick="closeModal('detail-modal')" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" fill="none" stroke="var(--ink-2)" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="detail-content"></div>
+    <div style="margin-top:20px;display:flex;gap:8px;justify-content:flex-end;" id="detail-actions"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="reset-modal">
+  <div class="modal-card" style="max-width:400px;">
+    <div style="text-align:center;padding:8px 0 20px;">
+      <div style="width:56px;height:56px;background:#fef2f2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;"><svg width="26" height="26" fill="none" stroke="#dc2626" stroke-width="2.2" viewBox="0 0 24 24"><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/><circle cx="12" cy="12" r="10"/></svg></div>
+      <h3 style="font-family:'Fraunces',serif;font-size:20px;margin-bottom:8px;">Hapus Semua Data?</h3>
+      <p style="font-size:13px;color:var(--ink-2);line-height:1.6;">Seluruh data tamu akan dihapus permanen. Tindakan ini <strong>tidak dapat dibatalkan</strong>.</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('reset-modal')" style="flex:1;justify-content:center;">Batal</button>
+      <button class="btn btn-danger" onclick="resetAllData()" style="flex:1;justify-content:center;">Ya, Hapus Semua</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">
+  <svg id="toast-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"></svg>
+  <span id="toast-msg">—</span>
+</div>
+
+<script>
+// ═══════════════════════════
+// FIREBASE
+// ═══════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyDgywfOZvdM7oJ1RYXHOBfrFlzdbCsTpWI",
+  authDomain: "tamu-undangan-ebd82.firebaseapp.com",
+  projectId: "tamu-undangan-ebd82",
+  storageBucket: "tamu-undangan-ebd82.firebasestorage.app",
+  messagingSenderId: "293509659075",
+  appId: "1:293509659075:web:8ddc49b398070e45b2e576",
+  databaseURL: "https://tamu-undangan-ebd82-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ═══════════════════════════
+// AUTH
+// ═══════════════════════════
+let adminPassword = 'admin123';
+document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('login-user').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  if (u==='admin' && p===adminPassword) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    startClock(); initData();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('login-pass').value = '';
+  }
+}
+function doLogout() {
+  stopScanner();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+function changePassword() {
+  const o = document.getElementById('old-pass').value;
+  const n = document.getElementById('new-pass').value.trim();
+  if (o!==adminPassword) { showToast('Password lama salah!','error'); return; }
+  if (n.length<6) { showToast('Password baru min. 6 karakter!','error'); return; }
+  adminPassword = n;
+  document.getElementById('old-pass').value = '';
+  document.getElementById('new-pass').value = '';
+  showToast('Password berhasil diubah!','success');
+}
+
+// ═══════════════════════════
+// CLOCK
+// ═══════════════════════════
+function startClock() {
+  const el = document.getElementById('topbar-time');
+  const tick = () => { el.textContent = new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); };
+  tick(); setInterval(tick,1000);
+}
+
+// ═══════════════════════════
+// FIREBASE DATA
+// ═══════════════════════════
+let allGuests = {};
+let filterMode = 'all';
+
+function initData() {
+  db.ref('tamu').on('value', snapshot => {
+    allGuests = {};
+    if (snapshot.exists()) snapshot.forEach(c => { allGuests[c.key] = c.val(); });
+    updateStats(); renderGuestTable(); renderCheckinTable(); renderRecent();
+    document.getElementById('last-update').textContent =
+      'Terakhir diperbarui: ' + new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  });
+}
+
+// ═══════════════════════════
+// CHECK-IN
+// ═══════════════════════════
+function doCheckin(key, silent=false) {
+  const g = allGuests[key];
+  if (!g) { if(!silent) showToast('Tamu tidak ditemukan!','error'); return false; }
+  if (g.status==='Hadir') { if(!silent) showToast(`${g.nama} sudah check-in!`,'info'); return false; }
+  const now = new Date();
+  db.ref(`tamu/${key}`).update({
+    status:'Hadir',
+    waktu_hadir: now.toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}),
+    timestamp_hadir: now.getTime()
+  }).then(()=>{ if(!silent) showToast(`✓ ${g.nama} berhasil check-in!`,'success'); })
+    .catch(e=>{ if(!silent) showToast('Gagal: '+e.message,'error'); });
+  return true;
+}
+function doUndoCheckin(key) {
+  const g = allGuests[key]; if(!g) return;
+  db.ref(`tamu/${key}`).update({status:'Belum',waktu_hadir:'',timestamp_hadir:null})
+    .then(()=>showToast(`Check-in ${g.nama} dibatalkan`,'info'))
+    .catch(e=>showToast('Gagal: '+e.message,'error'));
+}
+function doManualCheckin() {
+  const val = document.getElementById('manual-checkin-input').value.trim();
+  const res = document.getElementById('manual-checkin-result');
+  if (!val) { showToast('Masukkan ID atau nama!','error'); return; }
+  const entries = Object.entries(allGuests);
+  let match = entries.find(([,g])=>(g.id||'').toLowerCase()===val.toLowerCase());
+  if (!match) {
+    const nm = entries.filter(([,g])=>(g.nama||'').toLowerCase().includes(val.toLowerCase()));
+    if (nm.length===1) match=nm[0];
+    else if (nm.length>1) {
+      res.style.display='block';
+      res.innerHTML=`<div style="background:var(--amber-bg);border:1px solid #fde68a;border-radius:10px;padding:14px;font-size:13px;color:var(--amber);">${nm.length} tamu ditemukan. Gunakan ID:<br>${nm.map(([,g])=>`<code>${esc(g.id)}</code> — ${esc(g.nama)}`).join('<br>')}</div>`;
+      return;
+    }
+  }
+  if (!match) { res.style.display='block'; res.innerHTML=`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;font-size:13px;color:#dc2626;">Tamu "${esc(val)}" tidak ditemukan.</div>`; return; }
+  const [key,g] = match;
+  if (g.status==='Hadir') { res.style.display='block'; res.innerHTML=`<div style="background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:10px;padding:14px;font-size:13px;color:var(--blue);"><strong>${esc(g.nama)}</strong> sudah check-in pada <strong>${esc(g.waktu_hadir||'—')}</strong>.</div>`; return; }
+  doCheckin(key);
+  document.getElementById('manual-checkin-input').value='';
+  res.style.display='block';
+  res.innerHTML=`<div style="background:var(--green-bg);border:1px solid #bbf7d0;border-radius:10px;padding:14px;font-size:13px;color:var(--green);">✓ <strong>${esc(g.nama)}</strong> dari ${esc(g.instansi)} berhasil check-in!</div>`;
+  setTimeout(()=>{res.style.display='none';},4000);
+}
+document.getElementById('manual-checkin-input').addEventListener('keydown',e=>{if(e.key==='Enter')doManualCheckin();});
+
+// ═══════════════════════════════════════════════════════
+// QR SCANNER — menggunakan BarcodeDetector (sama seperti kasir)
+// ═══════════════════════════════════════════════════════
+let scanStream       = null;
+let scanDetector     = null;
+let scanActive       = false;
+let scanCooldown     = false;
+let scanLog          = [];
+let currentCamera    = 'environment'; // 'environment' = belakang, 'user' = depan
+let backCameras      = [];
+let frontCameras     = [];
+let useBack          = true;
+let backIdx          = 0;
+let frontIdx         = 0;
+
+async function startScanner() {
+  const btn = document.getElementById('btn-start-scan');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Memuat kamera...';
+
+  // Cek apakah BarcodeDetector tersedia
+  if (!('BarcodeDetector' in window)) {
+    document.getElementById('scanner-unsupported').style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="18" height="11" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>Mulai Scan Kamera`;
+    showToast('Browser tidak mendukung scan. Pakai Chrome/Edge terbaru.','error');
+    return;
+  }
+
+  try {
+    // Inisialisasi BarcodeDetector dengan semua format QR
+    const formats = await BarcodeDetector.getSupportedFormats();
+    scanDetector = new BarcodeDetector({ formats });
+
+    // Minta izin kamera dulu untuk enumerate devices
+    const tmp = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+    tmp.getTracks().forEach(t => t.stop());
+
+    // Enumerate semua kamera
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter(d => d.kind === 'videoinput');
+    await classifyCameras(videoDevices);
+
+    useBack = true; backIdx = 0; frontIdx = 0;
+    await openStream();
+
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>Mulai Scan Kamera`;
+  } catch(e) {
+    let msg = 'Gagal akses kamera.';
+    if (e.name==='NotAllowedError') msg = 'Izin kamera ditolak.';
+    else if (e.name==='NotFoundError') msg = 'Tidak ada kamera ditemukan.';
+    else if (e.name==='NotReadableError') msg = 'Kamera dipakai aplikasi lain.';
+    showToast(msg, 'error');
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>Mulai Scan Kamera`;
+  }
+}
+
+async function classifyCameras(devices) {
+  backCameras = []; frontCameras = [];
+  for (const d of devices) {
+    const label = d.label.toLowerCase();
+    if (/back|rear|belakang|environment/.test(label))    backCameras.push(d);
+    else if (/front|depan|user|selfie/.test(label))      frontCameras.push(d);
+    else {
+      // Coba deteksi lewat capabilities
+      let detected = false;
+      if (d.getCapabilities) {
+        try {
+          const caps = d.getCapabilities();
+          if (caps.facingMode?.includes('environment'))      { backCameras.push(d); detected = true; }
+          else if (caps.facingMode?.includes('user'))        { frontCameras.push(d); detected = true; }
+        } catch(e) {}
+      }
+      if (!detected) {
+        if (!backCameras.length) backCameras.push(d);
+        else frontCameras.push(d);
+      }
+    }
+  }
+  if (!backCameras.length && frontCameras.length) {
+    backCameras = frontCameras; frontCameras = [];
+  }
+}
+
+async function openStream() {
+  if (scanStream) scanStream.getTracks().forEach(t => t.stop());
+
+  const list = useBack ? backCameras : frontCameras;
+  let constraints;
+
+  if (list.length > 0) {
+    const cam = list[useBack ? backIdx : frontIdx];
+    constraints = { video: { deviceId: { exact: cam.deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } } };
+  } else {
+    constraints = { video: { facingMode: { exact: useBack ? 'environment' : 'user' }, width: { ideal: 1280 }, height: { ideal: 720 } } };
+  }
+
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia(constraints);
+  } catch(e) {
+    // Fallback tanpa exact constraint
+    constraints.video.facingMode = { ideal: useBack ? 'environment' : 'user' };
+    delete constraints.video.deviceId;
+    scanStream = await navigator.mediaDevices.getUserMedia(constraints);
+  }
+
+  const video = document.getElementById('scanner-video');
+  video.srcObject = scanStream;
+  await video.play();
+
+  document.getElementById('scanner-start').style.display     = 'none';
+  document.getElementById('scanner-container').style.display = 'block';
+  document.getElementById('camera-label').textContent        = useBack ? '📷 Kamera Belakang' : '🤳 Kamera Depan';
+
+  scanActive = true;
+  scanLoop(video);
+  showToast('Kamera aktif. Arahkan ke QR Code tamu.', 'info');
+}
+
+function stopScanner() {
+  scanActive = false;
+  if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+  const video = document.getElementById('scanner-video');
+  video.srcObject = null;
+  document.getElementById('scanner-start').style.display     = 'block';
+  document.getElementById('scanner-container').style.display = 'none';
+}
+
+async function flipCamera() {
+  useBack = !useBack;
+  const list = useBack ? backCameras : frontCameras;
+  if (!list.length) {
+    useBack = !useBack; // kembalikan
+    showToast('Hanya 1 kamera tersedia', 'info');
+    return;
+  }
+  try {
+    await openStream();
+    showToast(useBack ? '📷 Kamera belakang aktif' : '🤳 Kamera depan aktif', 'success');
+  } catch(e) {
+    showToast('Gagal ganti kamera', 'error');
+    useBack = !useBack;
+  }
+}
+
+// Loop scan menggunakan BarcodeDetector — persis seperti kasir
+async function scanLoop(video) {
+  while (scanActive) {
+    if (video.readyState >= 2 && !scanCooldown) {
+      try {
+        const barcodes = await scanDetector.detect(video);
+        if (barcodes.length > 0) {
+          handleScannedQR(barcodes[0].rawValue);
+          scanCooldown = true;
+          setTimeout(() => { scanCooldown = false; }, 2500);
+        }
+      } catch(e) { /* frame belum siap, skip */ }
+    }
+    await new Promise(r => setTimeout(r, 150)); // cek setiap 150ms
+  }
+}
+
+function playBeep(type) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  if (type === 'success') {
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } else if (type === 'warn') {
+    osc.frequency.setValueAtTime(660, ctx.currentTime);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  } else {
+    osc.frequency.setValueAtTime(220, ctx.currentTime);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  }
+}
+  function handleScannedQR(raw) {
+  let parsed = null;
+
+  try {
+    const obj = JSON.parse(raw);
+    if (obj && obj.id) parsed = obj;
+  } catch(e) {
+    const m = raw.match(/TMU-[A-Z0-9]+-[A-Z0-9]+/i);
+    if (m) parsed = { id: m[0].toUpperCase() };
+  }
+
+  if (!parsed || !parsed.id) {
+    playBeep('error');
+    addScanLog('❌ QR tidak valid', raw.substring(0,40), 'error');
+    showScanResult('error', 'QR Tidak Valid', 'QR Code ini bukan milik tamu undangan.');
+    return;
+  }
+
+  const id    = parsed.id;
+  const match = Object.entries(allGuests).find(([,g]) => g.id === id);
+
+  if (!match) {
+    playBeep('error');
+    addScanLog('❌ Tamu tidak ditemukan', `ID: ${id}`, 'error');
+    showScanResult('error', 'Tamu Tidak Ditemukan', `ID <strong>${esc(id)}</strong> tidak ada dalam database.`);
+    return;
+  }
+
+  const [key, g] = match;
+  if (g.status === 'Hadir') {
+    playBeep('warn');
+    addScanLog('⚠ Sudah check-in', g.nama, 'warn');
+    showScanResult('warn', 'Sudah Check-in',
+      `<strong>${esc(g.nama)}</strong> sudah check-in pada <strong>${esc(g.waktu_hadir||'—')}</strong>.`);
+    return;
+  }
+
+  doCheckin(key, true);
+  const wkt = new Date().toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'});
+  playBeep('success');
+  addScanLog('✓ Check-in berhasil', `${g.nama} — ${g.instansi}`, 'success');
+  showScanResult('success', 'Check-in Berhasil! 🎉',
+    `<strong style="font-size:16px;">${esc(g.nama)}</strong><br>
+     <span style="color:var(--ink-2);font-size:13px;">${esc(g.instansi)}</span><br><br>
+     <span class="badge id">${esc(id)}</span><br><br>
+     <span style="font-size:12px;color:var(--ink-3);">Check-in pada ${wkt}</span>`);
+}
+
+function showScanResult(type, title, content) {
+  const box = document.getElementById('scan-result-box');
+  const colors = {
+    success: { bg:'var(--green-bg)', border:'#bbf7d0', color:'var(--green)' },
+    warn:    { bg:'var(--amber-bg)', border:'#fde68a',  color:'var(--amber)' },
+    error:   { bg:'#fef2f2',         border:'#fecaca', color:'#dc2626'      }
+  };
+  const c = colors[type] || colors.error;
+  box.style.display    = 'block';
+  box.style.background = c.bg;
+  box.style.border     = `1px solid ${c.border}`;
+  document.getElementById('scan-result-title').style.color = c.color;
+  document.getElementById('scan-result-title').textContent = title;
+  document.getElementById('scan-result-content').innerHTML  = content;
+}
+
+function addScanLog(label, detail, type) {
+  const colors = { success:'var(--green)', warn:'var(--amber)', error:'#dc2626' };
+  const time   = new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  scanLog.unshift({ label, detail, type, time });
+  document.getElementById('scan-log').innerHTML = scanLog.map(l => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;
+      background:var(--surface);border:1px solid var(--border);font-size:12px;">
+      <span style="color:${colors[l.type]||'var(--ink-2)'};flex-shrink:0;">${l.label}</span>
+      <span style="color:var(--ink-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(l.detail)}</span>
+      <span style="color:var(--ink-3);flex-shrink:0;">${l.time}</span>
+    </div>`).join('');
+}
+
+function clearScanLog() {
+  scanLog = [];
+  document.getElementById('scan-log').innerHTML =
+    `<div style="text-align:center;padding:16px;color:var(--ink-3);font-size:13px;">Belum ada scan</div>`;
+  document.getElementById('scan-result-box').style.display = 'none';
+}
+
+// ═══════════════════════════
+// STATS
+// ═══════════════════════════
+function updateStats() {
+  const vals  = Object.values(allGuests);
+  const total = vals.length;
+  const hadir = vals.filter(g=>g.status==='Hadir').length;
+  const belum = total - hadir;
+  const pct   = total ? Math.round((hadir/total)*100) : 0;
+  document.getElementById('s-total').textContent      = total;
+  document.getElementById('s-hadir').textContent      = hadir;
+  document.getElementById('s-belum').textContent      = belum;
+  document.getElementById('s-pct').textContent        = pct+'%';
+  document.getElementById('bar-total').textContent    = total;
+  document.getElementById('bar-hadir-num').textContent = hadir;
+  document.getElementById('bar-belum-num').textContent = belum;
+  document.getElementById('bar-hadir').style.width    = pct+'%';
+  document.getElementById('bar-belum').style.width    = (100-pct)+'%';
+}
+
+// ═══════════════════════════
+// TABLES
+// ═══════════════════════════
+function getFilteredGuests() {
+  const q = (document.getElementById('guest-search')?.value||'').toLowerCase();
+  let arr = Object.entries(allGuests).map(([k,v])=>({key:k,...v}));
+  arr.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  if (filterMode==='hadir') arr = arr.filter(g=>g.status==='Hadir');
+  if (filterMode==='belum') arr = arr.filter(g=>g.status!=='Hadir');
+  if (q) arr = arr.filter(g=>(g.nama||'').toLowerCase().includes(q)||(g.instansi||'').toLowerCase().includes(q)||(g.wa||'').toLowerCase().includes(q));
+  return arr;
+}
+function renderGuestTable() {
+  const arr = getFilteredGuests();
+  document.getElementById('guests-count').textContent = `${arr.length} dari ${Object.keys(allGuests).length} tamu`;
+  if (!arr.length) { document.getElementById('guest-tbody').innerHTML=`<tr><td colspan="8"><div class="empty-state"><p>Tidak ada data</p></div></td></tr>`; return; }
+  document.getElementById('guest-tbody').innerHTML = arr.map((g,i)=>`
+    <tr>
+      <td style="color:var(--ink-3);font-size:12px;">${i+1}</td>
+      <td style="font-weight:600;">${esc(g.nama)}</td>
+      <td style="color:var(--ink-2);">${esc(g.instansi)}</td>
+      <td style="font-size:13px;color:var(--ink-2);">${esc(g.wa)}</td>
+      <td><span class="badge id">${esc(g.id)}</span></td>
+      <td>${g.status==='Hadir'?`<span class="badge hadir">✓ Hadir</span>`:`<span class="badge belum">⏳ Belum</span>`}</td>
+      <td style="font-size:12px;color:var(--ink-3);">${esc(g.waktu||'—')}</td>
+      <td><div class="row-actions">
+        ${g.status!=='Hadir'?`<button class="btn btn-checkin" onclick="doCheckin('${g.key}')">✓ Hadir</button>`:`<button class="btn btn-undo" onclick="doUndoCheckin('${g.key}')">Undo</button>`}
+        <button class="icon-btn" onclick="showDetail('${g.key}')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></button>
+
+        <button class="icon-btn danger" onclick="deleteGuest('${g.key}','${esc(g.nama)}')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg></button>
+      </div></td>
+    </tr>`).join('');
+}
+function filterGuests(){renderGuestTable();}
+function setFilter(mode,el){filterMode=mode;document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderGuestTable();}
+
+function renderCheckinTable() {
+  const q = (document.getElementById('checkin-search')?.value||'').toLowerCase();
+  let arr = Object.entries(allGuests).map(([k,v])=>({key:k,...v})).filter(g=>g.status==='Hadir').sort((a,b)=>(b.timestamp_hadir||0)-(a.timestamp_hadir||0));
+  if (q) arr = arr.filter(g=>(g.nama||'').toLowerCase().includes(q)||(g.instansi||'').toLowerCase().includes(q));
+  document.getElementById('checkin-count').textContent = `${arr.length} tamu hadir`;
+  if (!arr.length) { document.getElementById('checkin-tbody').innerHTML=`<tr><td colspan="7"><div class="empty-state"><p>Belum ada tamu yang check-in</p></div></td></tr>`; return; }
+  document.getElementById('checkin-tbody').innerHTML = arr.map((g,i)=>`
+    <tr>
+      <td style="color:var(--ink-3);font-size:12px;">${i+1}</td>
+      <td style="font-weight:600;">${esc(g.nama)}</td>
+      <td style="color:var(--ink-2);">${esc(g.instansi)}</td>
+      <td style="font-size:13px;color:var(--ink-2);">${esc(g.wa)}</td>
+      <td><span class="badge id">${esc(g.id)}</span></td>
+      <td><span style="font-size:12px;color:var(--green);font-weight:600;">✓ ${esc(g.waktu_hadir||'—')}</span></td>
+      <td><div class="row-actions">
+        <button class="icon-btn" onclick="showDetail('${g.key}')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></button>
+        <button class="icon-btn danger" onclick="doUndoCheckin('${g.key}')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
+      </div></td>
+    </tr>`).join('');
+}
+function filterCheckin(){renderCheckinTable();}
+
+function renderRecent() {
+  const arr = Object.values(allGuests).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0)).slice(0,5);
+  if (!arr.length) { document.getElementById('recent-list').innerHTML=`<div style="text-align:center;padding:20px;color:var(--ink-3);font-size:13px;">Belum ada pendaftar</div>`; return; }
+  document.getElementById('recent-list').innerHTML = arr.map(g=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);">
+      <div style="width:34px;height:34px;border-radius:9px;background:${g.status==='Hadir'?'var(--green-bg)':'var(--amber-bg)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="15" height="15" fill="none" stroke="${g.status==='Hadir'?'var(--green)':'var(--amber)'}" stroke-width="2.2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(g.nama)}</div>
+        <div style="font-size:11px;color:var(--ink-3);">${esc(g.instansi)}</div>
+      </div>
+      <span class="badge ${g.status==='Hadir'?'hadir':'belum'}" style="font-size:10px;">${g.status==='Hadir'?'Hadir':'Belum'}</span>
+    </div>`).join('');
+}
+
+// ═══════════════════════════
+// DETAIL MODAL
+// ═══════════════════════════
+function showDetail(key) {
+  const g = allGuests[key]; if(!g) return;
+  document.getElementById('detail-content').innerHTML=`<div style="display:grid;gap:10px;">
+    ${detailRow('Nama Lengkap',esc(g.nama))}
+    ${detailRow('Instansi / Asal',esc(g.instansi))}
+    ${detailRow('No. WhatsApp',esc(g.wa))}
+    ${detailRow('ID Tamu',`<span class="badge id">${esc(g.id)}</span>`)}
+    ${detailRow('Waktu Daftar',esc(g.waktu||'—'))}
+    ${detailRow('Status',g.status==='Hadir'?`<span class="badge hadir">✓ Hadir</span>`:`<span class="badge belum">⏳ Belum Hadir</span>`)}
+    ${g.status==='Hadir'?detailRow('Waktu Check-in',`<span style="color:var(--green);font-weight:600;">${esc(g.waktu_hadir||'—')}</span>`):''}
+  </div>`;
+  const act=document.getElementById('detail-actions'); act.innerHTML='';
+  if(g.status!=='Hadir'){const b=document.createElement('button');b.className='btn btn-green';b.innerHTML='✓ Check-in Sekarang';b.onclick=()=>{doCheckin(key);closeModal('detail-modal');};act.appendChild(b);}
+  const bc=document.createElement('button');bc.className='btn btn-ghost';bc.textContent='Tutup';bc.onclick=()=>closeModal('detail-modal');act.appendChild(bc);
+  document.getElementById('detail-modal').classList.add('open');
+}
+function detailRow(label,val){return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;gap:12px;"><span style="font-size:11px;font-weight:700;color:var(--ink-2);letter-spacing:.04em;text-transform:uppercase;flex-shrink:0;">${label}</span><span style="font-size:14px;color:var(--ink);text-align:right;">${val}</span></div>`;}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ═══════════════════════════
+// DELETE / RESET
+// ═══════════════════════════
+function deleteGuest(key,nama){
+  if(!confirm(`Hapus tamu "${nama}"?`)) return;
+  db.ref(`tamu/${key}`).remove().then(()=>showToast(`"${nama}" dihapus`,'success')).catch(e=>showToast('Gagal: '+e.message,'error'));
+}
+function confirmReset(){document.getElementById('reset-modal').classList.add('open');}
+function resetAllData(){closeModal('reset-modal');db.ref('tamu').remove().then(()=>showToast('Semua data dihapus','info')).catch(e=>showToast('Gagal: '+e.message,'error'));}
+
+// ═══════════════════════════
+// EXPORT
+// ═══════════════════════════
+function buildRows(arr){return arr.map((g,i)=>({'No':i+1,'ID Tamu':g.id||'','Nama Lengkap':g.nama||'','Instansi / Asal':g.instansi||'','No. WhatsApp':g.wa||'','Status':g.status||'Belum','Waktu Daftar':g.waktu||'','Waktu Check-in':g.waktu_hadir||''}));}
+function doExport(rows,filename){
+  if(!rows.length){showToast('Tidak ada data!','error');return;}
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:4},{wch:20},{wch:28},{wch:26},{wch:18},{wch:12},{wch:22},{wch:22}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Data Tamu');
+  XLSX.writeFile(wb,`${filename}-${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.xlsx`);
+  showToast(`Berhasil ekspor ${rows.length} data!`,'success');
+}
+function exportAll()   { doExport(buildRows(Object.values(allGuests).sort((a,b)=>(a.timestamp||0)-(b.timestamp||0))),'Semua-Tamu'); }
+function exportHadir() { doExport(buildRows(Object.values(allGuests).filter(g=>g.status==='Hadir').sort((a,b)=>(a.timestamp_hadir||0)-(b.timestamp_hadir||0))),'Tamu-Hadir'); }
+function exportBelum() { doExport(buildRows(Object.values(allGuests).filter(g=>g.status!=='Hadir')),'Tamu-Absen'); }
+
+// ═══════════════════════════
+// NAVIGATION
+// ═══════════════════════════
+const pageTitles={dashboard:'Dashboard',guests:'Data Tamu',checkin:'Data Check-in',scanner:'Scan QR Check-in',export:'Export Data',settings:'Pengaturan'};
+function showPage(id){
+  if(id!=='scanner') stopScanner();
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const btn=document.querySelector(`.nav-item[onclick="showPage('${id}')"]`);
+  if(btn) btn.classList.add('active');
+  document.getElementById('page-title').textContent=pageTitles[id]||id;
+  closeSidebar();
+}
+
+// ═══════════════════════════
+// SIDEBAR MOBILE
+// ═══════════════════════════
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sidebar-overlay').classList.toggle('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('open');}
+function checkMobile(){document.getElementById('sidebar-toggle').style.display=window.innerWidth<=900?'block':'none';}
+window.addEventListener('resize',checkMobile); checkMobile();
+
+// ═══════════════════════════
+// TOAST
+// ═══════════════════════════
+let toastTimer;
+function showToast(msg,type='success'){
+  const toast=document.getElementById('toast'),icon=document.getElementById('toast-icon');
+  const icons={success:'<polyline points="20 6 9 13 4 10"/>',error:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',info:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'};
+  toast.className=`toast ${type} show`; icon.innerHTML=icons[type]||icons.info;
+  document.getElementById('toast-msg').textContent=msg;
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>toast.classList.remove('show'),3500);
+}
+
+// ═══════════════════════════
+// UTILS
+// ═══════════════════════════
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function checkDashGrid(){const g=document.getElementById('dash-grid');if(g)g.style.gridTemplateColumns=window.innerWidth<720?'1fr':'1fr 1fr';}
+window.addEventListener('resize',checkDashGrid); checkDashGrid();
+
+// Auto bypass login for now
+if (document.getElementById('login-screen')) document.getElementById('login-screen').style.display = 'none';
+if (document.getElementById('app')) document.getElementById('app').style.display = 'block';
+startClock(); initData();
+</script>
+</body>
+</html>

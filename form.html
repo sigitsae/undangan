@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registrasi Tamu Undangan</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- ✅ PERBAIKAN: Firebase pakai CDN biasa, BUKAN type="module" -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #faf7f2;
+      min-height: 100vh;
+    }
+    h1, h2, h3, .font-display { font-family: 'Playfair Display', serif; }
+
+    .gold-gradient {
+      background: linear-gradient(135deg, #b8860b 0%, #daa520 40%, #f0c040 60%, #b8860b 100%);
+    }
+    .gold-text {
+      background: linear-gradient(135deg, #b8860b, #daa520, #f0c040);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .ornate-border {
+      border: 1.5px solid #daa520;
+      position: relative;
+    }
+    .ornate-border::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 1px solid rgba(218,165,32,0.3);
+      pointer-events: none;
+    }
+    .form-input {
+      width: 100%;
+      background: #fffef8;
+      border: 1.5px solid #e0d5b0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      color: #3a2e1c;
+      transition: all 0.2s;
+      outline: none;
+    }
+    .form-input:focus {
+      border-color: #daa520;
+      box-shadow: 0 0 0 3px rgba(218,165,32,0.15);
+    }
+    .form-input::placeholder { color: #b5a882; }
+    .btn-gold {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px 28px;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      background: linear-gradient(135deg, #b8860b 0%, #daa520 50%, #c8a015 100%);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(184,134,11,0.35);
+    }
+    .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(184,134,11,0.45); }
+    .btn-gold:active { transform: translateY(0); }
+    .btn-gold:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      font-size: 14px;
+      cursor: pointer;
+      border: 1.5px solid #daa520;
+      background: transparent;
+      color: #b8860b;
+      transition: all 0.2s;
+    }
+    .btn-outline:hover { background: #fdf3d0; }
+    .toast {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 9999;
+      background: #1e3a24;
+      color: #7ee8a2;
+      padding: 14px 22px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+      transform: translateX(120%);
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .toast.show { transform: translateX(0); }
+    #qr-canvas canvas, #qr-canvas img { display: block; margin: 0 auto; }
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #c8a850;
+      font-size: 18px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #daa520, transparent);
+    }
+    .fade-in { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #fdf3d0;
+      color: #b8860b;
+      border: 1px solid #daa520;
+    }
+    .ornament {
+      position: absolute;
+      opacity: 0.07;
+      pointer-events: none;
+      font-size: 180px;
+      line-height: 1;
+      color: #daa520;
+      font-family: 'Playfair Display', serif;
+    }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .animate-spin { animation: spin 1s linear infinite; }
+    .warning-box {
+      background: #fff8e6;
+      border: 1.5px solid #f0c040;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: #7a5c00;
+      margin-top: 8px;
+    }
+    /* Status koneksi */
+    #firebase-status {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 600;
+      z-index: 999;
+    }
+    #firebase-status.connecting { background:#fff3cd;color:#856404;border:1px solid #ffc107; }
+    #firebase-status.connected  { background:#d1fae5;color:#065f46;border:1px solid #6ee7b7; }
+    #firebase-status.error      { background:#fee2e2;color:#991b1b;border:1px solid #fca5a5; }
+  </style>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: { DEFAULT: '#daa520', dark: '#b8860b', light: '#f0c040' },
+            cream: { DEFAULT: '#faf7f2', dark: '#f0e8d0' },
+            ink: { DEFAULT: '#3a2e1c', light: '#6b5a3a' }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="bg-cream min-h-screen">
+
+  <!-- Status Firebase (pojok kiri bawah) -->
+  <div id="firebase-status" class="connecting">⏳ Menghubungkan...</div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+      <polyline points="20 6 9 12 4 9"/><polyline points="4 9 9 12 20 6"/><path d="M9 12v9"/>
+    </svg>
+    <span id="toast-msg">Berhasil!</span>
+  </div>
+
+  <!-- HEADER -->
+  <header class="relative overflow-hidden bg-ink py-10 px-4" style="background:#3a2e1c;">
+    <div class="ornament" style="top:-40px;right:-30px;">✦</div>
+    <div class="ornament" style="bottom:-60px;left:-20px;font-size:220px;">◈</div>
+    <div class="max-w-2xl mx-auto text-center relative z-10">
+      <div class="divider mb-4">
+        <span class="text-gold text-sm tracking-widest font-medium uppercase" style="color:#daa520;">Selamat Datang</span>
+      </div>
+      <h1 class="font-display text-4xl md:text-5xl text-white mb-2">
+        Registrasi Tamu <span class="gold-text">Undangan</span>
+      </h1>
+      <p class="text-white/50 text-sm tracking-wide mt-2">Silahkan isi form berikut untuk mendaftar sebagai tamu undangan</p>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="max-w-2xl mx-auto px-4 py-10">
+
+    <!-- FORM -->
+    <section id="form-section" class="fade-in">
+      <div class="bg-white rounded-2xl shadow-sm ornate-border p-8">
+        <div class="divider mb-7">
+          <span style="color:rgba(218,165,32,0.8);font-size:13px;letter-spacing:0.15em;text-transform:uppercase;font-weight:500;">Form Pendaftaran</span>
+        </div>
+        <div class="space-y-5">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:rgba(58,46,28,0.6);">
+              Nama Lengkap <span class="text-red-400">*</span>
+            </label>
+            <input type="text" id="input-nama" class="form-input" placeholder="Masukkan nama lengkap Anda..." />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:rgba(58,46,28,0.6);">
+              Instansi / Asal <span class="text-red-400">*</span>
+            </label>
+            <input type="text" id="input-instansi" class="form-input" placeholder="Nama instansi atau asal daerah..." />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:rgba(58,46,28,0.6);">
+              No. WhatsApp <span class="text-red-400">*</span>
+            </label>
+            <input type="tel" id="input-wa" class="form-input" placeholder="Contoh: 08123456789" />
+            <div id="wa-warning" class="warning-box" style="display:none;">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>Nomor WhatsApp ini sudah pernah terdaftar. Apakah Anda yakin ingin mendaftar kembali?</span>
+            </div>
+          </div>
+        </div>
+        <button onclick="registerGuest()" id="btn-daftar" class="btn-gold w-full mt-7">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12l7 7 7-7"/>
+          </svg>
+          Daftar Sekarang
+        </button>
+      </div>
+    </section>
+
+    <!-- QR RESULT -->
+    <section id="qr-section" class="hidden fade-in">
+      <div class="bg-white rounded-2xl shadow-sm ornate-border p-8 text-center">
+        <div class="divider mb-6">
+          <span style="color:rgba(218,165,32,0.8);font-size:13px;letter-spacing:0.15em;text-transform:uppercase;font-weight:500;">Pendaftaran Berhasil</span>
+        </div>
+        <div class="w-12 h-12 rounded-full gold-gradient flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <svg width="24" height="24" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+            <polyline points="20 6 9 13 4 10"/><line x1="4" y1="10" x2="9" y2="13"/>
+            <path d="M9 13v7l4-2 4 2v-7"/>
+          </svg>
+        </div>
+        <h2 class="font-display text-2xl mb-1" style="color:#3a2e1c;">
+          Selamat, <span class="gold-text" id="qr-nama-display"></span>!
+        </h2>
+        <p class="text-sm mb-1" style="color:rgba(58,46,28,0.5);">
+          ID Tamu: <span id="qr-id-display" class="font-mono font-semibold" style="color:#b8860b;"></span>
+        </p>
+        <span id="qr-instansi-display" class="badge mb-6 inline-block"></span>
+        <div class="rounded-xl p-6 mb-5 inline-block mx-auto" style="background:#faf7f2;">
+          <div id="qr-canvas" class="mx-auto"></div>
+        </div>
+        <p class="text-xs mb-2" style="color:rgba(58,46,28,0.4);">Screenshot atau simpan QR Code ini sebagai tanda masuk Anda</p>
+        <p class="text-xs mb-5 font-medium" style="color:#b8860b;">
+          ⚠ Tunjukkan QR Code ini kepada panitia saat memasuki acara
+        </p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <button onclick="saveQR()" class="btn-gold">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Simpan QR Code
+          </button>
+          <button onclick="resetForm()" class="btn-outline">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+            </svg>
+            Daftar Tamu Lain
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="text-center py-8 text-xs" style="color:rgba(58,46,28,0.3);">
+    <div class="divider max-w-xs mx-auto mb-4"><span>✦</span></div>
+    Sistem Registrasi Tamu Undangan &copy; 2025
+  </footer>
+
+  <script>
+    // ═══════════════════════════════════════
+    // ✅ INISIALISASI FIREBASE (compat SDK)
+    // ═══════════════════════════════════════
+    const firebaseConfig = {
+      apiKey: "AIzaSyDgywfOZvdM7oJ1RYXHOBfrFlzdbCsTpWI",
+      authDomain: "tamu-undangan-ebd82.firebaseapp.com",
+      projectId: "tamu-undangan-ebd82",
+      storageBucket: "tamu-undangan-ebd82.firebasestorage.app",
+      messagingSenderId: "293509659075",
+      appId: "1:293509659075:web:8ddc49b398070e45b2e576",
+      databaseURL: "https://tamu-undangan-ebd82-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Cek koneksi Firebase
+    const connRef = db.ref('.info/connected');
+    connRef.on('value', snap => {
+      const status = document.getElementById('firebase-status');
+      if (snap.val() === true) {
+        status.className = 'connected';
+        status.textContent = '✅ Terhubung ke server';
+        setTimeout(() => status.style.display = 'none', 3000);
+      } else {
+        status.className = 'error';
+        status.textContent = '❌ Tidak terhubung';
+        status.style.display = 'block';
+      }
+    });
+
+    // ═══════════════════════════════════════
+    // VARIABEL
+    // ═══════════════════════════════════════
+    let currentQRId = null;
+    let waCheckTimeout = null;
+
+    // ═══════════════════════════════════════
+    // TOAST
+    // ═══════════════════════════════════════
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      toast.style.background = isError ? '#3a1c1c' : '#1e3a24';
+      toast.style.color = isError ? '#f87171' : '#7ee8a2';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    // ═══════════════════════════════════════
+    // GENERATE ID
+    // ═══════════════════════════════════════
+    function generateId() {
+      return 'TMU-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 5).toUpperCase();
+    }
+
+    // ═══════════════════════════════════════
+    // CEK DUPLIKAT WA
+    // ═══════════════════════════════════════
+    document.getElementById('input-wa').addEventListener('input', function() {
+      clearTimeout(waCheckTimeout);
+      const wa = this.value.trim();
+      document.getElementById('wa-warning').style.display = 'none';
+      if (wa.length < 8) return;
+      waCheckTimeout = setTimeout(() => checkDuplicateWA(wa), 800);
+    });
+
+    function checkDuplicateWA(wa) {
+      db.ref('tamu').once('value', snapshot => {
+        if (!snapshot.exists()) return;
+        let found = false;
+        snapshot.forEach(child => {
+          if ((child.val().wa || '') === wa) found = true;
+        });
+        document.getElementById('wa-warning').style.display = found ? 'flex' : 'none';
+      });
+    }
+
+    // ═══════════════════════════════════════
+    // ✅ REGISTER GUEST — DIPERBAIKI
+    // ═══════════════════════════════════════
+    function registerGuest() {
+      const nama     = document.getElementById('input-nama').value.trim();
+      const instansi = document.getElementById('input-instansi').value.trim();
+      const wa       = document.getElementById('input-wa').value.trim();
+
+      // Validasi input
+      if (!nama || !instansi || !wa) {
+        showToast('Mohon lengkapi semua field!', true);
+        return;
+      }
+      if (!/^[0-9+\-\s]{8,15}$/.test(wa)) {
+        showToast('Format nomor WhatsApp tidak valid!', true);
+        return;
+      }
+
+      // Tampilkan loading
+      const btn = document.getElementById('btn-daftar');
+      btn.disabled = true;
+      btn.innerHTML = `
+        <svg class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".2"/>
+          <path d="M21 12a9 9 0 00-9-9"/>
+        </svg> Mendaftarkan...`;
+
+      // ✅ Timeout 10 detik — agar tidak loading selamanya
+      const timeoutId = setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Daftar Sekarang`;
+        showToast('Koneksi timeout. Cek internet dan coba lagi!', true);
+      }, 10000);
+
+      const id   = generateId();
+      const data = {
+        id,
+        nama,
+        instansi,
+        wa,
+        status        : 'Belum',
+        waktu         : new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+        timestamp     : Date.now(),
+        waktu_hadir   : '',
+        timestamp_hadir: null
+      };
+
+      // ✅ Push ke Firebase pakai compat SDK (lebih stabil)
+      db.ref('tamu').push(data)
+        .then(() => {
+          clearTimeout(timeoutId);
+          showToast('Pendaftaran berhasil! Silahkan simpan QR Code Anda.');
+          currentQRId = id;
+          showQR(nama, id, instansi);
+        })
+        .catch(err => {
+          clearTimeout(timeoutId);
+          console.error('Firebase error:', err);
+          showToast('Gagal mendaftar: ' + err.message, true);
+          btn.disabled = false;
+          btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Daftar Sekarang`;
+        });
+    }
+
+    // ═══════════════════════════════════════
+    // TAMPILKAN QR
+    // ═══════════════════════════════════════
+    function showQR(nama, id, instansi) {
+      document.getElementById('form-section').classList.add('hidden');
+      document.getElementById('qr-section').classList.remove('hidden');
+      document.getElementById('qr-nama-display').textContent = nama;
+      document.getElementById('qr-id-display').textContent = id;
+      document.getElementById('qr-instansi-display').textContent = instansi;
+
+      const canvas = document.getElementById('qr-canvas');
+      canvas.innerHTML = '';
+      new QRCode(canvas, {
+        text: JSON.stringify({ id, nama, instansi }),
+        width: 200,
+        height: 200,
+        colorDark: '#3a2e1c',
+        colorLight: '#faf7f2',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    }
+
+    // ═══════════════════════════════════════
+    // SIMPAN QR
+    // ═══════════════════════════════════════
+    function saveQR() {
+      const canvas = document.querySelector('#qr-canvas canvas');
+      if (!canvas) {
+        const img = document.querySelector('#qr-canvas img');
+        if (img) {
+          const link = document.createElement('a');
+          link.href = img.src;
+          link.download = `QR-${currentQRId || 'tamu'}.png`;
+          link.click();
+        } else {
+          showToast('QR Code tidak ditemukan!', true);
+        }
+        return;
+      }
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `QR-${currentQRId || 'tamu'}.png`;
+      link.click();
+      showToast('QR Code berhasil disimpan!');
+    }
+
+    // ═══════════════════════════════════════
+    // RESET FORM
+    // ═══════════════════════════════════════
+    function resetForm() {
+      document.getElementById('input-nama').value = '';
+      document.getElementById('input-instansi').value = '';
+      document.getElementById('input-wa').value = '';
+      document.getElementById('wa-warning').style.display = 'none';
+      const btn = document.getElementById('btn-daftar');
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Daftar Sekarang`;
+      document.getElementById('qr-section').classList.add('hidden');
+      document.getElementById('form-section').classList.remove('hidden');
+    }
+
+    // Enter key
+    document.querySelectorAll('.form-input').forEach(inp => {
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') registerGuest(); });
+    });
+  </script>
+
+</body>
+</html>

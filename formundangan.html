@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Form Pendaftaran Tamu — Rizky & Salsabila</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet" />
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    :root {
+      --gold: #C9A96E;
+      --gold-light: #E8D5A3;
+      --gold-dark: #8B6914;
+      --cream: #FAF6EE;
+      --ink: #1A1208;
+      --ink-soft: #3D2E10;
+      --surface: rgba(30, 21, 8, 0.85);
+      --border-gold: rgba(201,169,110,0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0E0A04;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: #FAF6EE;
+    }
+
+    /* ── ANIMATED BG ── */
+    .bg-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .bg-canvas::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: -20%;
+      width: 70%;
+      height: 70%;
+      background: radial-gradient(ellipse, rgba(201,169,110,0.07) 0%, transparent 65%);
+      animation: driftA 18s ease-in-out infinite alternate;
+    }
+    .bg-canvas::after {
+      content: '';
+      position: absolute;
+      bottom: -20%;
+      right: -15%;
+      width: 55%;
+      height: 60%;
+      background: radial-gradient(ellipse, rgba(201,169,110,0.05) 0%, transparent 65%);
+      animation: driftB 22s ease-in-out infinite alternate;
+    }
+    @keyframes driftA { from { transform: translate(0,0); } to { transform: translate(5%,8%); } }
+    @keyframes driftB { from { transform: translate(0,0); } to { transform: translate(-6%,-5%); } }
+
+    /* ── NOISE ── */
+    .noise {
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.35;
+    }
+
+    /* ── LAYOUT ── */
+    .main-wrap {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px 72px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeUp 0.9s ease both;
+    }
+    .header-eyebrow {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.35em;
+      color: rgba(201,169,110,0.55);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .header-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 38px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #C9A96E 0%, #F0D898 45%, #C9A96E 65%, #8B6914 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .header-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      font-style: italic;
+      color: rgba(201,169,110,0.5);
+    }
+
+    /* ── CARD ── */
+    .card {
+      width: 100%;
+      max-width: 560px;
+      background: linear-gradient(155deg, #1E1508 0%, #120D04 60%, #1A1208 100%);
+      border: 1px solid var(--border-gold);
+      border-radius: 24px;
+      padding: 40px 36px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.9s ease 0.1s both;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: -1px; right: -1px; bottom: -1px;
+      background: linear-gradient(135deg, rgba(201,169,110,0.2) 0%, transparent 25%, transparent 75%, rgba(201,169,110,0.1) 100%);
+      border-radius: 24px;
+      pointer-events: none;
+    }
+
+    /* ── CORNER ORNAMENTS ── */
+    .corner { position: absolute; width: 40px; height: 40px; pointer-events: none; }
+    .corner-tl { top: 14px; left: 14px; border-top: 1.5px solid rgba(201,169,110,0.4); border-left: 1.5px solid rgba(201,169,110,0.4); }
+    .corner-tr { top: 14px; right: 14px; border-top: 1.5px solid rgba(201,169,110,0.4); border-right: 1.5px solid rgba(201,169,110,0.4); }
+    .corner-bl { bottom: 14px; left: 14px; border-bottom: 1.5px solid rgba(201,169,110,0.4); border-left: 1.5px solid rgba(201,169,110,0.4); }
+    .corner-br { bottom: 14px; right: 14px; border-bottom: 1.5px solid rgba(201,169,110,0.4); border-right: 1.5px solid rgba(201,169,110,0.4); }
+
+    /* ── SECTION TITLE ── */
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .section-title::before, .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(201,169,110,0.35));
+    }
+    .section-title::after {
+      background: linear-gradient(90deg, rgba(201,169,110,0.35), transparent);
+    }
+    .section-title span {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      color: rgba(201,169,110,0.6);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* ── FORM FIELDS ── */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: rgba(201,169,110,0.6);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .form-input {
+      width: 100%;
+      background: rgba(201,169,110,0.04);
+      border: 1px solid rgba(201,169,110,0.18);
+      border-radius: 12px;
+      padding: 13px 16px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      color: #FAF6EE;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+    .form-input::placeholder {
+      color: rgba(201,169,110,0.25);
+    }
+    .form-input:focus {
+      border-color: rgba(201,169,110,0.5);
+      background: rgba(201,169,110,0.07);
+      box-shadow: 0 0 0 3px rgba(201,169,110,0.08);
+    }
+    .form-input.error {
+      border-color: rgba(220,38,38,0.6);
+      background: rgba(220,38,38,0.05);
+    }
+    .field-error {
+      font-size: 11px;
+      color: #f87171;
+      margin-top: 5px;
+      display: none;
+    }
+    .field-error.show { display: block; }
+
+    /* ── FORM ROW ── */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* ── HINT ── */
+    .form-hint {
+      font-size: 11px;
+      color: rgba(201,169,110,0.3);
+      margin-top: 5px;
+    }
+
+    /* ── SUBMIT BTN ── */
+    .btn-submit {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #C9A96E 0%, #E8D5A3 50%, #C9A96E 100%);
+      background-size: 200% 100%;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #1A1208;
+      cursor: pointer;
+      transition: all 0.35s ease;
+      box-shadow: 0 6px 24px rgba(201,169,110,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      margin-top: 8px;
+    }
+    .btn-submit:hover:not(:disabled) {
+      background-position: right center;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 32px rgba(201,169,110,0.35);
+    }
+    .btn-submit:active:not(:disabled) { transform: translateY(0); }
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-submit .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(26,18,8,0.3);
+      border-top-color: #1A1208;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .btn-submit.loading .spinner { display: block; }
+    .btn-submit.loading .btn-text { display: none; }
+
+    /* ── DIVIDER ── */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(201,169,110,0.25) 30%, rgba(201,169,110,0.4) 50%, rgba(201,169,110,0.25) 70%, transparent);
+      position: relative;
+      margin: 28px 0;
+    }
+    .divider::after {
+      content: '✦';
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(201,169,110,0.5);
+      font-size: 9px;
+      background: #120D04;
+      padding: 0 10px;
+    }
+
+    /* ── SUCCESS STATE ── */
+    .success-box {
+      display: none;
+      text-align: center;
+      padding: 8px 0 4px;
+      animation: fadeUp 0.5s ease both;
+    }
+    .success-icon {
+      width: 64px; height: 64px;
+      background: rgba(201,169,110,0.1);
+      border: 1px solid rgba(201,169,110,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .success-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #C9A96E, #F0D898, #C9A96E);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+    }
+    .success-label {
+      font-size: 12px;
+      color: rgba(201,169,110,0.45);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    /* ── LINK BOX ── */
+    .link-box {
+      background: rgba(201,169,110,0.06);
+      border: 1px solid rgba(201,169,110,0.22);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+      margin-bottom: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .link-box:hover {
+      border-color: rgba(201,169,110,0.4);
+      background: rgba(201,169,110,0.09);
+    }
+    .link-url {
+      font-size: 12px;
+      color: rgba(201,169,110,0.7);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: monospace;
+    }
+
+    /* ── ACTION BUTTONS ── */
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .btn-action {
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(201,169,110,0.22);
+      background: rgba(201,169,110,0.06);
+      color: rgba(201,169,110,0.8);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn-action:hover {
+      background: rgba(201,169,110,0.12);
+      border-color: rgba(201,169,110,0.4);
+      color: var(--gold-light);
+      transform: translateY(-1px);
+    }
+    .btn-action.wa {
+      background: rgba(37,211,102,0.06);
+      border-color: rgba(37,211,102,0.2);
+      color: #4ade80;
+    }
+    .btn-action.wa:hover {
+      background: rgba(37,211,102,0.12);
+      border-color: rgba(37,211,102,0.4);
+    }
+    .btn-add {
+      width: 100%;
+      padding: 13px;
+      border-radius: 10px;
+      border: 1px dashed rgba(201,169,110,0.3);
+      background: transparent;
+      color: rgba(201,169,110,0.55);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      margin-top: 4px;
+    }
+    .btn-add:hover {
+      background: rgba(201,169,110,0.05);
+      border-color: rgba(201,169,110,0.5);
+      color: rgba(201,169,110,0.85);
+    }
+
+    /* ── ID BADGE ── */
+    .id-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(201,169,110,0.08);
+      border: 1px solid rgba(201,169,110,0.2);
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-family: monospace;
+      color: rgba(201,169,110,0.7);
+      margin-bottom: 20px;
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1E1508;
+      border: 1px solid rgba(201,169,110,0.3);
+      border-radius: 12px;
+      padding: 12px 22px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gold-light);
+      z-index: 999;
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    #toast.success { border-color: rgba(74,222,128,0.3); color: #4ade80; }
+    #toast.error { border-color: rgba(248,113,113,0.3); color: #f87171; }
+
+    /* ── BULK SECTION ── */
+    .bulk-wrap {
+      width: 100%;
+      max-width: 560px;
+      margin-top: 16px;
+      animation: fadeUp 0.9s ease 0.2s both;
+    }
+    .bulk-card {
+      background: linear-gradient(155deg, #1A1208 0%, #120D04 100%);
+      border: 1px solid rgba(201,169,110,0.15);
+      border-radius: 20px;
+      padding: 28px 32px;
+      position: relative;
+    }
+    .bulk-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      color: rgba(201,169,110,0.8);
+      margin-bottom: 6px;
+    }
+    .bulk-sub {
+      font-size: 12px;
+      color: rgba(201,169,110,0.35);
+      margin-bottom: 18px;
+      line-height: 1.6;
+    }
+    .bulk-textarea {
+      width: 100%;
+      min-height: 120px;
+      background: rgba(201,169,110,0.04);
+      border: 1px solid rgba(201,169,110,0.15);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: monospace;
+      font-size: 12.5px;
+      color: rgba(250,246,238,0.7);
+      outline: none;
+      resize: vertical;
+      transition: all 0.2s;
+    }
+    .bulk-textarea:focus {
+      border-color: rgba(201,169,110,0.4);
+      background: rgba(201,169,110,0.06);
+    }
+    .bulk-textarea::placeholder { color: rgba(201,169,110,0.2); }
+    .btn-bulk {
+      margin-top: 12px;
+      width: 100%;
+      padding: 12px;
+      background: rgba(201,169,110,0.08);
+      border: 1px solid rgba(201,169,110,0.2);
+      border-radius: 10px;
+      color: rgba(201,169,110,0.8);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-bulk:hover {
+      background: rgba(201,169,110,0.14);
+      border-color: rgba(201,169,110,0.4);
+    }
+
+    /* ── RECENT GUESTS ── */
+    .recent-wrap {
+      width: 100%;
+      max-width: 560px;
+      margin-top: 16px;
+      animation: fadeUp 0.9s ease 0.3s both;
+    }
+    .recent-card {
+      background: linear-gradient(155deg, #1A1208 0%, #120D04 100%);
+      border: 1px solid rgba(201,169,110,0.15);
+      border-radius: 20px;
+      padding: 28px 32px;
+    }
+    .recent-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      color: rgba(201,169,110,0.8);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .recent-count {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 12px;
+      color: rgba(201,169,110,0.4);
+      font-weight: 500;
+    }
+    .guest-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      border-radius: 10px;
+      background: rgba(201,169,110,0.04);
+      border: 1px solid rgba(201,169,110,0.1);
+      margin-bottom: 8px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .guest-item:hover {
+      background: rgba(201,169,110,0.08);
+      border-color: rgba(201,169,110,0.25);
+    }
+    .guest-avatar {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      background: rgba(201,169,110,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: rgba(201,169,110,0.7);
+    }
+    .guest-info { flex: 1; min-width: 0; }
+    .guest-nama {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: rgba(250,246,238,0.85);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .guest-meta {
+      font-size: 11px;
+      color: rgba(201,169,110,0.4);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .btn-copy-link {
+      flex-shrink: 0;
+      padding: 6px 11px;
+      border-radius: 7px;
+      border: 1px solid rgba(201,169,110,0.2);
+      background: rgba(201,169,110,0.06);
+      color: rgba(201,169,110,0.65);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .btn-copy-link:hover {
+      background: rgba(201,169,110,0.14);
+      color: var(--gold-light);
+    }
+    .empty-recent {
+      text-align: center;
+      padding: 28px;
+      color: rgba(201,169,110,0.25);
+      font-size: 13px;
+    }
+
+    /* ── ANIMS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #0E0A04; }
+    ::-webkit-scrollbar-thumb { background: rgba(201,169,110,0.2); border-radius: 2px; }
+
+    @media (max-width: 520px) {
+      .card { padding: 28px 20px; }
+      .form-row { grid-template-columns: 1fr; }
+      .action-row { grid-template-columns: 1fr; }
+      .header-title { font-size: 28px; }
+      .bulk-card, .recent-card { padding: 22px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-canvas"></div>
+<div class="noise"></div>
+
+<div class="main-wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-eyebrow">Sistem Undangan Digital</div>
+    <h1 class="header-title">Rizky & Salsabila</h1>
+    <p class="header-sub">Form Pendaftaran Tamu Undangan</p>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="card" id="form-card">
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <!-- FORM STATE -->
+    <div id="form-state">
+      <div class="section-title"><span>Data Tamu</span></div>
+
+      <div class="form-group">
+        <label class="form-label" for="nama">Nama Lengkap <span style="color:#f87171;">*</span></label>
+        <input type="text" id="nama" class="form-input" placeholder="Contoh: Budi Santoso" autocomplete="off" />
+        <div class="field-error" id="err-nama">Nama lengkap wajib diisi</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="instansi">Instansi / Asal</label>
+          <input type="text" id="instansi" class="form-input" placeholder="Kantor / Keluarga / dst" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="wa">No. WhatsApp</label>
+          <input type="tel" id="wa" class="form-input" placeholder="628123456789" />
+          <div class="form-hint">Awali dengan 62 (tanpa +)</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <button class="btn-submit" id="btn-submit" onclick="submitForm()">
+        <div class="spinner"></div>
+        <span class="btn-text" style="display:flex;align-items:center;gap:8px;">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          Daftarkan & Generate Link
+        </span>
+      </button>
+    </div>
+
+    <!-- SUCCESS STATE -->
+    <div class="success-box" id="success-state">
+      <div class="success-icon" style="animation: popIn 0.4s ease both;">
+        <svg width="28" height="28" fill="none" stroke="var(--gold)" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 13 4 10"/></svg>
+      </div>
+
+      <div class="success-name" id="suc-nama">—</div>
+      <div class="success-label">berhasil didaftarkan</div>
+
+      <div class="id-badge">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+        <span id="suc-id">—</span>
+      </div>
+
+      <div class="link-box" onclick="copyLink()" title="Klik untuk salin link">
+        <svg width="14" height="14" fill="none" stroke="rgba(201,169,110,0.6)" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        <div class="link-url" id="suc-link">—</div>
+        <svg width="14" height="14" fill="none" stroke="rgba(201,169,110,0.5)" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-action" onclick="copyLink()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Salin Link
+        </button>
+        <button class="btn-action wa" onclick="kirimWA()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.14 1.534 5.875L0 24l6.29-1.508A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.793 9.793 0 01-5.017-1.378l-.36-.214-3.732.895.934-3.617-.235-.372A9.79 9.79 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+          Kirim WA
+        </button>
+        <a class="btn-action" id="btn-open-link" href="#" target="_blank">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Buka Undangan
+        </a>
+        <a class="btn-action" href="index.html" target="_blank">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Admin Panel
+        </a>
+      </div>
+
+      <button class="btn-add" onclick="resetForm()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tambah Tamu Baru
+      </button>
+    </div>
+  </div>
+
+  <!-- BULK INPUT -->
+  <div class="bulk-wrap">
+    <div class="bulk-card">
+      <div class="corner corner-tl" style="width:30px;height:30px;top:10px;left:10px;"></div>
+      <div class="corner corner-tr" style="width:30px;height:30px;top:10px;right:10px;"></div>
+      <div class="bulk-title">Import Massal (CSV)</div>
+      <div class="bulk-sub">
+        Masukkan banyak tamu sekaligus. Format per baris:<br>
+        <span style="font-family:monospace;color:rgba(201,169,110,0.5);font-size:11px;">Nama Tamu, Instansi, NomorWA</span>
+      </div>
+      <textarea class="bulk-textarea" id="bulk-input" placeholder="Ahmad Fauzi, PT Maju Bersama, 6281234567890&#10;Siti Rahma, Keluarga, 6289876543210&#10;Budi Hartono, Kantor Pusat, 628111222333"></textarea>
+      <button class="btn-bulk" onclick="submitBulk()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import Semua Tamu
+      </button>
+      <div id="bulk-result" style="margin-top:10px;font-size:12px;color:rgba(201,169,110,0.45);display:none;"></div>
+    </div>
+  </div>
+
+  <!-- RECENT GUESTS -->
+  <div class="recent-wrap">
+    <div class="recent-card">
+      <div class="recent-title">
+        <span>Tamu Terdaftar</span>
+        <span class="recent-count" id="recent-count">Memuat...</span>
+      </div>
+      <div id="recent-list">
+        <div class="empty-recent">Belum ada tamu terdaftar</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast">
+  <span id="toast-icon">✓</span>
+  <span id="toast-msg">—</span>
+</div>
+
+<script>
+// ── FIREBASE ──
+const firebaseConfig = {
+  apiKey: "AIzaSyDgywfOZvdM7oJ1RYXHOBfrFlzdbCsTpWI",
+  authDomain: "tamu-undangan-ebd82.firebaseapp.com",
+  projectId: "tamu-undangan-ebd82",
+  storageBucket: "tamu-undangan-ebd82.firebasestorage.app",
+  messagingSenderId: "293509659075",
+  appId: "1:293509659075:web:8ddc49b398070e45b2e576",
+  databaseURL: "https://tamu-undangan-ebd82-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ── STATE ──
+let lastGuest = null;
+let allGuests = {};
+
+// ── GENERATE ID ──
+function generateId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const ts = Date.now().toString(36).toUpperCase();
+  let rand = '';
+  for (let i = 0; i < 4; i++) rand += chars[Math.floor(Math.random() * chars.length)];
+  return `TMU-${ts}-${rand}`;
+}
+
+// ── GET BASE URL ──
+function getBaseUrl() {
+  const loc = window.location;
+  return loc.origin + loc.pathname.replace('formundangan.html', '');
+}
+
+// ── BUILD INVITATION LINK ──
+function buildLink(id) {
+  return getBaseUrl() + 'rizky-dan-alsabila.html?id=' + encodeURIComponent(id);
+}
+
+// ── VALIDATE ──
+function validate() {
+  let ok = true;
+  const nama = document.getElementById('nama').value.trim();
+  const errNama = document.getElementById('err-nama');
+  const namaInput = document.getElementById('nama');
+  if (!nama) {
+    namaInput.classList.add('error');
+    errNama.classList.add('show');
+    ok = false;
+  } else {
+    namaInput.classList.remove('error');
+    errNama.classList.remove('show');
+  }
+  return ok;
+}
+
+// ── SUBMIT SINGLE ──
+async function submitForm() {
+  if (!validate()) return;
+
+  const nama     = document.getElementById('nama').value.trim();
+  const instansi = document.getElementById('instansi').value.trim();
+  const wa       = document.getElementById('wa').value.trim().replace(/\D/g, '');
+  const id       = generateId();
+  const now      = new Date();
+  const waktu    = now.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  const data = {
+    id, nama,
+    instansi: instansi || '—',
+    wa: wa || '—',
+    status: 'Belum',
+    waktu,
+    timestamp: now.getTime(),
+    waktu_hadir: '',
+    timestamp_hadir: null
+  };
+
+  try {
+    await db.ref('tamu').push(data);
+    lastGuest = data;
+    showSuccess(data);
+  } catch (e) {
+    showToast('Gagal menyimpan: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  }
+}
+
+// ── SHOW SUCCESS ──
+function showSuccess(g) {
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = false;
+  btn.classList.remove('loading');
+
+  const link = buildLink(g.id);
+
+  document.getElementById('form-state').style.display = 'none';
+  document.getElementById('success-state').style.display = 'block';
+  document.getElementById('suc-nama').textContent = g.nama;
+  document.getElementById('suc-id').textContent   = g.id;
+  document.getElementById('suc-link').textContent = link;
+  document.getElementById('btn-open-link').href   = link;
+
+  showToast('✓ Tamu berhasil didaftarkan!', 'success');
+}
+
+// ── RESET FORM ──
+function resetForm() {
+  document.getElementById('form-state').style.display = 'block';
+  document.getElementById('success-state').style.display = 'none';
+  document.getElementById('nama').value = '';
+  document.getElementById('instansi').value = '';
+  document.getElementById('wa').value = '';
+  document.getElementById('nama').focus();
+  lastGuest = null;
+}
+
+// ── COPY LINK ──
+function copyLink() {
+  if (!lastGuest) return;
+  const link = buildLink(lastGuest.id);
+  navigator.clipboard.writeText(link).then(() => {
+    showToast('Link undangan disalin!', 'success');
+  }).catch(() => {
+    // Fallback
+    const el = document.createElement('textarea');
+    el.value = link;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast('Link undangan disalin!', 'success');
+  });
+}
+
+// ── KIRIM WA ──
+function kirimWA() {
+  if (!lastGuest) return;
+  const g    = lastGuest;
+  const link = buildLink(g.id);
+  const wa   = g.wa !== '—' ? g.wa.replace(/\D/g,'') : '';
+  const pesan = `Assalamu'alaikum Wr. Wb.\n\nKepada Yth.\n*${g.nama}*\n\nDengan hormat, kami mengundang Bapak/Ibu/Saudara/i untuk hadir dalam acara pernikahan kami.\n\n🔗 *Link Undangan Digital Anda:*\n${link}\n\nSilakan tunjukkan QR Code pada link tersebut saat memasuki acara.\n\nTerima kasih atas kehadiran Anda. 🙏\n\n_Rizky & Salsabila_`;
+  const encoded = encodeURIComponent(pesan);
+  const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+  if (wa) {
+    if (isMobile) {
+      window.open(`whatsapp://send?phone=${wa}&text=${encoded}`, '_blank');
+    } else {
+      window.open(`https://web.whatsapp.com/send?phone=${wa}&text=${encoded}`, '_blank');
+    }
+  } else {
+    // Tidak ada nomor, buka tanpa nomor supaya bisa pilih kontak
+    if (isMobile) {
+      window.open(`whatsapp://send?text=${encoded}`, '_blank');
+    } else {
+      // Salin link dulu
+      copyLink();
+      showToast('Nomor WA tidak ada. Link disalin ke clipboard.', 'error');
+    }
+  }
+}
+
+// ── BULK IMPORT ──
+async function submitBulk() {
+  const raw = document.getElementById('bulk-input').value.trim();
+  if (!raw) { showToast('Input kosong!', 'error'); return; }
+
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!lines.length) { showToast('Tidak ada data valid!', 'error'); return; }
+
+  const resultEl = document.getElementById('bulk-result');
+  resultEl.style.display = 'block';
+  resultEl.textContent   = `Memproses ${lines.length} baris...`;
+
+  let ok = 0, fail = 0;
+  const now = new Date();
+
+  for (const line of lines) {
+    const parts = line.split(',').map(p => p.trim());
+    if (!parts[0]) { fail++; continue; }
+
+    const nama     = parts[0];
+    const instansi = parts[1] || '—';
+    const wa       = (parts[2] || '').replace(/\D/g, '') || '—';
+    const id       = generateId();
+    const waktu    = now.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+
+    try {
+      await db.ref('tamu').push({
+        id, nama, instansi, wa,
+        status: 'Belum', waktu,
+        timestamp: Date.now(),
+        waktu_hadir: '', timestamp_hadir: null
+      });
+      ok++;
+      // Delay kecil agar tidak spam
+      await new Promise(r => setTimeout(r, 120));
+    } catch(e) {
+      fail++;
+    }
+  }
+
+  resultEl.innerHTML = `<span style="color:#4ade80;">✓ ${ok} tamu berhasil didaftarkan</span>${fail ? ` &nbsp;·&nbsp; <span style="color:#f87171;">${fail} gagal</span>` : ''}`;
+  document.getElementById('bulk-input').value = '';
+  showToast(`Import selesai: ${ok} tamu ditambahkan`, 'success');
+}
+
+// ── LOAD RECENT ──
+function loadRecent() {
+  db.ref('tamu').on('value', snap => {
+    allGuests = {};
+    if (snap.exists()) snap.forEach(c => { allGuests[c.key] = c.val(); });
+
+    const vals = Object.values(allGuests).sort((a,b) => (b.timestamp||0)-(a.timestamp||0));
+    document.getElementById('recent-count').textContent = vals.length + ' tamu';
+
+    const list = document.getElementById('recent-list');
+    if (!vals.length) {
+      list.innerHTML = '<div class="empty-recent">Belum ada tamu terdaftar</div>';
+      return;
+    }
+
+    list.innerHTML = vals.slice(0, 20).map(g => `
+      <div class="guest-item">
+        <div class="guest-avatar">${(g.nama||'?')[0].toUpperCase()}</div>
+        <div class="guest-info">
+          <div class="guest-nama">${esc(g.nama)}</div>
+          <div class="guest-meta">${esc(g.instansi)} &nbsp;·&nbsp; <span style="font-family:monospace;font-size:10px;">${esc(g.id)}</span></div>
+        </div>
+        <button class="btn-copy-link" onclick="copyGuestLink('${esc(g.id)}',event)">Salin</button>
+      </div>
+    `).join('');
+
+    if (vals.length > 20) {
+      list.innerHTML += `<div style="text-align:center;padding:10px 0;font-size:11px;color:rgba(201,169,110,0.3);">... dan ${vals.length-20} tamu lainnya — lihat di <a href="index.html" target="_blank" style="color:rgba(201,169,110,0.5);">Admin Panel</a></div>`;
+    }
+  });
+}
+
+function copyGuestLink(id, e) {
+  e.stopPropagation();
+  const link = buildLink(id);
+  navigator.clipboard.writeText(link).then(() => {
+    showToast('Link disalin: ' + id, 'success');
+  }).catch(() => {
+    showToast('Gagal salin link', 'error');
+  });
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg, type='success') {
+  const t   = document.getElementById('toast');
+  const ico = document.getElementById('toast-icon');
+  const txt = document.getElementById('toast-msg');
+  ico.textContent = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+  txt.textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 3500);
+}
+
+// ── ESCAPE HTML ──
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── ENTER KEY ──
+document.getElementById('wa').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitForm();
+});
+document.getElementById('nama').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('instansi').focus();
+});
+document.getElementById('instansi').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('wa').focus();
+});
+
+// ── INIT ──
+loadRecent();
+</script>
+</body>
+</html>

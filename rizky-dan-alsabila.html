@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Undangan Pernikahan Rizky & Salsabila</title>
+
+  <!-- ── OPEN GRAPH / WHATSAPP PREVIEW ── -->
+  <meta property="og:title" content="Undangan Pernikahan Rizky & Salsabila" />
+  <meta property="og:description" content="Kami mengundang Bapak/Ibu/Saudara/i untuk hadir di hari bahagia kami 💍" />
+  <meta property="og:image" content="https://ik.imagekit.io/5bnhlcghq/asd.png?tr=w-1200,h-630" />
+  <meta property="og:image:secure_url" content="https://ik.imagekit.io/5bnhlcghq/asd.png?tr=w-1200,h-630" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Undangan Pernikahan Rizky & Salsabila" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://sigitsae.github.io/undangan/undangan.html" />
+  <meta property="og:site_name" content="Undangan Digital" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Undangan Pernikahan Rizky & Salsabila" />
+  <meta name="twitter:description" content="Kami mengundang Bapak/Ibu/Saudara/i untuk hadir di hari bahagia kami 💍" />
+  <meta name="twitter:image" content="https://ik.imagekit.io/5bnhlcghq/asd.png?tr=w-1200,h-630" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --gold: #C9A96E;
+      --gold-light: #E8D5A3;
+      --gold-dark: #8B6914;
+      --cream: #FAF6EE;
+      --ink: #1A1208;
+      --ink-soft: #3D2E10;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--ink);
+      font-family: 'Lato', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0.4;
+    }
+
+    /* ── GOLD TEXT ── */
+    .gold { color: var(--gold); }
+    .gold-gradient {
+      background: linear-gradient(135deg, #C9A96E 0%, #F0D898 40%, #C9A96E 60%, #8B6914 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── FONTS ── */
+    .font-playfair { font-family: 'Playfair Display', serif; }
+    .font-cormorant { font-family: 'Cormorant Garamond', serif; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+    @keyframes rotateSlow {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    @keyframes pulse-soft {
+      0%, 100% { opacity: 0.6; }
+      50%       { opacity: 1; }
+    }
+    @keyframes floatUp {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-6px); }
+    }
+
+    .anim-1 { animation: fadeUp 1s ease both; }
+    .anim-2 { animation: fadeUp 1s ease 0.2s both; }
+    .anim-3 { animation: fadeUp 1s ease 0.4s both; }
+    .anim-4 { animation: fadeUp 1s ease 0.6s both; }
+    .anim-5 { animation: fadeUp 1s ease 0.8s both; }
+    .anim-6 { animation: fadeUp 1s ease 1.0s both; }
+    .anim-7 { animation: fadeUp 1s ease 1.2s both; }
+    .anim-8 { animation: scaleIn 1s ease 1.4s both; }
+    .anim-page { animation: fadeIn 0.6s ease both; }
+
+    /* ── ORNAMENT LINE ── */
+    .ornament-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: center;
+    }
+    .ornament-line::before,
+    .ornament-line::after {
+      content: '';
+      flex: 1;
+      max-width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold));
+    }
+    .ornament-line::after {
+      background: linear-gradient(90deg, var(--gold), transparent);
+    }
+
+    /* ── DIVIDER ── */
+    .gold-divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold-light) 50%, var(--gold) 70%, transparent);
+      position: relative;
+    }
+    .gold-divider::after {
+      content: '✦';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--gold);
+      font-size: 10px;
+      background: var(--ink);
+      padding: 0 8px;
+    }
+
+    /* ── CARD ── */
+    .invitation-card {
+      background: linear-gradient(160deg, #1E1508 0%, #120D04 40%, #1A1208 100%);
+      border: 1px solid rgba(201,169,110,0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    .invitation-card::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: -1px; right: -1px; bottom: -1px;
+      background: linear-gradient(135deg, rgba(201,169,110,0.3) 0%, transparent 30%, transparent 70%, rgba(201,169,110,0.15) 100%);
+      pointer-events: none;
+    }
+
+    /* ── CORNER ORNAMENTS ── */
+    .corner {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      pointer-events: none;
+    }
+    .corner-tl { top: 16px; left: 16px; border-top: 1.5px solid var(--gold); border-left: 1.5px solid var(--gold); }
+    .corner-tr { top: 16px; right: 16px; border-top: 1.5px solid var(--gold); border-right: 1.5px solid var(--gold); }
+    .corner-bl { bottom: 16px; left: 16px; border-bottom: 1.5px solid var(--gold); border-left: 1.5px solid var(--gold); }
+    .corner-br { bottom: 16px; right: 16px; border-bottom: 1.5px solid var(--gold); border-right: 1.5px solid var(--gold); }
+
+    /* ── NAME BADGE ── */
+    .name-badge {
+      background: linear-gradient(135deg, rgba(201,169,110,0.08) 0%, rgba(201,169,110,0.04) 100%);
+      border: 1px solid rgba(201,169,110,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .name-badge::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(201,169,110,0.06), transparent);
+      animation: shimmer 3s ease infinite;
+    }
+
+    /* ── QR AREA ── */
+    .qr-area {
+      background: rgba(255,255,255,0.97);
+      border: 2px solid rgba(201,169,110,0.4);
+      position: relative;
+    }
+    .qr-corner {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+    }
+    .qr-corner-tl { top: -1px; left: -1px; border-top: 3px solid var(--gold); border-left: 3px solid var(--gold); }
+    .qr-corner-tr { top: -1px; right: -1px; border-top: 3px solid var(--gold); border-right: 3px solid var(--gold); }
+    .qr-corner-bl { bottom: -1px; left: -1px; border-bottom: 3px solid var(--gold); border-left: 3px solid var(--gold); }
+    .qr-corner-br { bottom: -1px; right: -1px; border-bottom: 3px solid var(--gold); border-right: 3px solid var(--gold); }
+
+    /* ── MAPS BUTTON ── */
+    .maps-btn {
+      background: linear-gradient(135deg, #C9A96E 0%, #E8D5A3 50%, #C9A96E 100%);
+      background-size: 200% 100%;
+      transition: background-position 0.4s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 4px 20px rgba(201,169,110,0.25);
+    }
+    .maps-btn:hover {
+      background-position: right center;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(201,169,110,0.4);
+    }
+    .maps-btn:active { transform: translateY(0); }
+
+    /* ── FLORAL DECOR ── */
+    .floral-top {
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      font-size: 80px;
+      opacity: 0.04;
+      pointer-events: none;
+      user-select: none;
+      line-height: 1;
+    }
+
+    /* ── ROTATING STAR ── */
+    .rotating-star {
+      display: inline-block;
+      animation: rotateSlow 8s linear infinite;
+      color: var(--gold);
+      font-size: 12px;
+    }
+
+    /* ── FLOAT ── */
+    .floating {
+      animation: floatUp 4s ease-in-out infinite;
+    }
+
+    /* ── SAVE DATE BADGE ── */
+    .save-date-badge {
+      background: var(--gold);
+      clip-path: polygon(8px 0%, calc(100% - 8px) 0%, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0% 50%);
+    }
+
+    /* ── DATE GRID ── */
+    .date-block {
+      background: rgba(201,169,110,0.08);
+      border: 1px solid rgba(201,169,110,0.2);
+    }
+
+    /* ── PULSE DOT ── */
+    .pulse-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse-soft 2s ease infinite;
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--ink); }
+    ::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 2px; }
+  </style>
+</head>
+<body class="anim-page">
+
+  <!-- BG GRADIENT BLOBS -->
+  <div style="position:fixed;inset:0;pointer-events:none;z-index:0;">
+    <div style="position:absolute;top:-20%;left:-20%;width:60%;height:60%;background:radial-gradient(ellipse,rgba(201,169,110,0.06) 0%,transparent 70%);"></div>
+    <div style="position:absolute;bottom:-20%;right:-20%;width:50%;height:50%;background:radial-gradient(ellipse,rgba(201,169,110,0.04) 0%,transparent 70%);"></div>
+  </div>
+
+  <!-- MAIN WRAPPER -->
+  <div style="position:relative;z-index:1;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px 48px;">
+    <div style="width:100%;max-width:440px;">
+
+      <!-- ══════════════════════════ -->
+      <!-- INVITATION CARD           -->
+      <!-- ══════════════════════════ -->
+      <div class="invitation-card rounded-2xl" style="padding:40px 28px 36px;">
+
+        <!-- Corner ornaments -->
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+
+        <!-- Floral bg -->
+        <div class="floral-top">❧</div>
+
+        <!-- ── SAVE THE DATE ── -->
+        <div class="anim-1" style="text-align:center;margin-bottom:28px;">
+          <div class="save-date-badge" style="display:inline-block;padding:5px 22px;">
+            <span style="font-family:'Lato',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.25em;color:#1A1208;text-transform:uppercase;">Save The Date</span>
+          </div>
+        </div>
+
+        <!-- ── BISMILLAH / OPENER ── -->
+        <div class="anim-2" style="text-align:center;margin-bottom:20px;">
+          <p class="font-cormorant gold-gradient" style="font-size:15px;font-style:italic;letter-spacing:0.05em;line-height:1.7;">
+            Dengan memohon Ridho Allah SWT
+          </p>
+        </div>
+
+        <!-- ── TITLE DIVIDER ── -->
+        <div class="anim-2" style="margin-bottom:24px;">
+          <div class="gold-divider"></div>
+        </div>
+
+        <!-- ── UNDANGAN LABEL ── -->
+        <div class="anim-3" style="text-align:center;margin-bottom:8px;">
+          <div class="ornament-line">
+            <span style="font-family:'Lato',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.3em;color:rgba(201,169,110,0.7);text-transform:uppercase;">Undangan Pernikahan</span>
+          </div>
+        </div>
+
+        <!-- ── COUPLE NAMES ── -->
+        <div class="anim-3" style="text-align:center;margin-bottom:6px;">
+          <h1 class="font-playfair gold-gradient" style="font-size:42px;font-weight:700;line-height:1.15;letter-spacing:-0.01em;">
+            Rizky
+          </h1>
+          <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin:4px 0;">
+            <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(201,169,110,0.4));max-width:60px;"></div>
+            <span class="font-cormorant" style="color:var(--gold);font-size:22px;font-style:italic;">&amp;</span>
+            <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(201,169,110,0.4),transparent);max-width:60px;"></div>
+          </div>
+          <h1 class="font-playfair gold-gradient" style="font-size:42px;font-weight:700;line-height:1.15;letter-spacing:-0.01em;">
+            Salsabila
+          </h1>
+        </div>
+
+        <!-- ── DIVIDER ── -->
+        <div class="anim-4" style="margin:24px 0;">
+          <div class="gold-divider"></div>
+        </div>
+
+        <!-- ── DATE BLOCKS ── -->
+        <div class="anim-4" style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:24px;">
+          <div class="date-block rounded-xl" style="text-align:center;padding:14px 8px;">
+            <div class="font-playfair" style="color:var(--gold-light);font-size:32px;font-weight:700;line-height:1;">15</div>
+            <div style="font-family:'Lato',sans-serif;font-size:10px;letter-spacing:0.15em;color:rgba(201,169,110,0.6);text-transform:uppercase;margin-top:2px;">Agustus</div>
+          </div>
+          <div style="text-align:center;padding:4px;">
+            <div class="rotating-star">✦</div>
+          </div>
+          <div class="date-block rounded-xl" style="text-align:center;padding:14px 8px;">
+            <div class="font-playfair" style="color:var(--gold-light);font-size:32px;font-weight:700;line-height:1;">2025</div>
+            <div style="font-family:'Lato',sans-serif;font-size:10px;letter-spacing:0.15em;color:rgba(201,169,110,0.6);text-transform:uppercase;margin-top:2px;">Masehi</div>
+          </div>
+        </div>
+
+        <!-- ── TIME ── -->
+        <div class="anim-4" style="text-align:center;margin-bottom:24px;">
+          <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(201,169,110,0.08);border:1px solid rgba(201,169,110,0.2);border-radius:999px;padding:8px 20px;">
+            <svg width="13" height="13" fill="none" stroke="var(--gold)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span style="font-family:'Lato',sans-serif;font-size:13px;color:rgba(232,213,163,0.85);letter-spacing:0.05em;">09.00 WIB – Selesai</span>
+          </div>
+        </div>
+
+        <!-- ── DIVIDER ── -->
+        <div class="anim-5" style="margin-bottom:24px;">
+          <div class="gold-divider"></div>
+        </div>
+
+        <!-- ── LOCATION ── -->
+        <div class="anim-5" style="text-align:center;margin-bottom:20px;">
+          <div style="margin-bottom:10px;">
+            <div style="font-family:'Lato',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.25em;color:rgba(201,169,110,0.6);text-transform:uppercase;margin-bottom:8px;">Lokasi Acara</div>
+            <div class="font-playfair" style="color:var(--gold-light);font-size:20px;font-weight:600;margin-bottom:4px;">Grand Ballroom Mulia</div>
+            <div style="font-family:'Lato',sans-serif;font-size:13px;color:rgba(232,213,163,0.55);line-height:1.6;">Jl. Sudirman No. 123, Jakarta Selatan<br>DKI Jakarta, Indonesia</div>
+          </div>
+
+          <!-- Maps Button -->
+          <a href="https://maps.google.com" target="_blank" style="text-decoration:none;display:inline-block;margin-top:14px;">
+            <button class="maps-btn" style="display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:999px;border:none;cursor:pointer;font-family:'Lato',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#1A1208;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Buka Google Maps
+            </button>
+          </a>
+        </div>
+
+        <!-- ── DIVIDER ── -->
+        <div class="anim-6" style="margin-bottom:28px;">
+          <div class="gold-divider"></div>
+        </div>
+
+        <!-- ══════════════════════════ -->
+        <!-- NAMA TAMU SECTION         -->
+        <!-- ══════════════════════════ -->
+        <div class="anim-6" style="margin-bottom:28px;">
+          <div style="text-align:center;margin-bottom:14px;">
+            <div style="font-family:'Lato',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.25em;color:rgba(201,169,110,0.55);text-transform:uppercase;margin-bottom:4px;">Kepada Yth.</div>
+          </div>
+
+          <!-- Name Badge -->
+          <div class="name-badge rounded-xl" style="padding:20px 24px;text-align:center;position:relative;">
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px;">
+              <div class="pulse-dot"></div>
+              <div class="font-playfair gold-gradient" style="font-size:26px;font-weight:700;letter-spacing:0.02em;">
+  <span id="nama-tamu">Memuat...</span>
+</div>
+              <div class="pulse-dot"></div>
+            </div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:rgba(201,169,110,0.5);">beserta keluarga</div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════ -->
+        <!-- QR CODE SECTION           -->
+        <!-- ══════════════════════════ -->
+        <div class="anim-7" style="margin-bottom:0;">
+          <div style="text-align:center;margin-bottom:14px;">
+            <div class="ornament-line">
+              <span style="font-family:'Lato',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.25em;color:rgba(201,169,110,0.55);text-transform:uppercase;">Tiket QR Code</span>
+            </div>
+            <p style="font-family:'Lato',sans-serif;font-size:11px;color:rgba(201,169,110,0.4);margin-top:6px;">Tunjukkan QR ini saat memasuki acara</p>
+          </div>
+
+          <!-- QR Box -->
+          <div class="anim-8 floating" style="display:flex;justify-content:center;">
+            <div style="position:relative;display:inline-block;">
+              <div class="qr-area rounded-xl" style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;">
+                <!-- QR Corner Markers -->
+                <div class="qr-corner qr-corner-tl"></div>
+                <div class="qr-corner qr-corner-tr"></div>
+                <div class="qr-corner qr-corner-bl"></div>
+                <div class="qr-corner qr-corner-br"></div>
+
+                <!-- QR Placeholder visual -->
+                <div id="qr-placeholder" style="width:140px;height:140px;position:relative;">
+                  <!-- Mimicking QR pattern with SVG -->
+                  <svg viewBox="0 0 140 140" width="140" height="140" xmlns="http://www.w3.org/2000/svg" style="opacity:0.15;">
+                    <rect x="10" y="10" width="40" height="40" rx="4" fill="#1A1208"/>
+                    <rect x="16" y="16" width="28" height="28" rx="2" fill="white"/>
+                    <rect x="22" y="22" width="16" height="16" fill="#1A1208"/>
+                    <rect x="90" y="10" width="40" height="40" rx="4" fill="#1A1208"/>
+                    <rect x="96" y="16" width="28" height="28" rx="2" fill="white"/>
+                    <rect x="102" y="22" width="16" height="16" fill="#1A1208"/>
+                    <rect x="10" y="90" width="40" height="40" rx="4" fill="#1A1208"/>
+                    <rect x="16" y="96" width="28" height="28" rx="2" fill="white"/>
+                    <rect x="22" y="102" width="16" height="16" fill="#1A1208"/>
+                    <rect x="60" y="10" width="6" height="6" fill="#1A1208"/>
+                    <rect x="70" y="10" width="6" height="6" fill="#1A1208"/>
+                    <rect x="60" y="20" width="6" height="6" fill="#1A1208"/>
+                    <rect x="70" y="20" width="12" height="6" fill="#1A1208"/>
+                    <rect x="60" y="30" width="18" height="6" fill="#1A1208"/>
+                    <rect x="60" y="50" width="6" height="6" fill="#1A1208"/>
+                    <rect x="70" y="50" width="6" height="6" fill="#1A1208"/>
+                    <rect x="10" y="60" width="12" height="6" fill="#1A1208"/>
+                    <rect x="26" y="60" width="6" height="6" fill="#1A1208"/>
+                    <rect x="36" y="60" width="6" height="6" fill="#1A1208"/>
+                    <rect x="50" y="60" width="6" height="6" fill="#1A1208"/>
+                    <rect x="60" y="60" width="6" height="6" fill="#1A1208"/>
+                    <rect x="70" y="60" width="12" height="6" fill="#1A1208"/>
+                    <rect x="86" y="60" width="6" height="6" fill="#1A1208"/>
+                    <rect x="96" y="60" width="12" height="6" fill="#1A1208"/>
+                    <rect x="112" y="60" width="18" height="6" fill="#1A1208"/>
+                    <rect x="50" y="70" width="6" height="6" fill="#1A1208"/>
+                    <rect x="60" y="70" width="12" height="6" fill="#1A1208"/>
+                    <rect x="76" y="70" width="6" height="6" fill="#1A1208"/>
+                    <rect x="90" y="70" width="6" height="6" fill="#1A1208"/>
+                    <rect x="100" y="70" width="6" height="6" fill="#1A1208"/>
+                    <rect x="110" y="70" width="20" height="6" fill="#1A1208"/>
+                    <rect x="50" y="80" width="12" height="6" fill="#1A1208"/>
+                    <rect x="66" y="80" width="18" height="6" fill="#1A1208"/>
+                    <rect x="90" y="80" width="6" height="6" fill="#1A1208"/>
+                    <rect x="100" y="80" width="12" height="6" fill="#1A1208"/>
+                    <rect x="116" y="80" width="14" height="6" fill="#1A1208"/>
+                    <rect x="50" y="90" width="6" height="6" fill="#1A1208"/>
+                    <rect x="60" y="90" width="6" height="6" fill="#1A1208"/>
+                    <rect x="70" y="90" width="6" height="6" fill="#1A1208"/>
+                    <rect x="50" y="100" width="18" height="6" fill="#1A1208"/>
+                    <rect x="72" y="100" width="6" height="6" fill="#1A1208"/>
+                    <rect x="50" y="110" width="6" height="6" fill="#1A1208"/>
+                    <rect x="60" y="110" width="12" height="6" fill="#1A1208"/>
+                    <rect x="76" y="110" width="6" height="6" fill="#1A1208"/>
+                    <rect x="90" y="110" width="6" height="20" fill="#1A1208"/>
+                    <rect x="100" y="110" width="6" height="6" fill="#1A1208"/>
+                    <rect x="110" y="110" width="6" height="6" fill="#1A1208"/>
+                    <rect x="120" y="110" width="10" height="6" fill="#1A1208"/>
+                    <rect x="50" y="120" width="6" height="6" fill="#1A1208"/>
+                    <rect x="60" y="120" width="6" height="6" fill="#1A1208"/>
+                    <rect x="70" y="120" width="6" height="6" fill="#1A1208"/>
+                    <rect x="100" y="120" width="6" height="6" fill="#1A1208"/>
+                    <rect x="110" y="120" width="20" height="6" fill="#1A1208"/>
+                  </svg>
+                </div>
+
+                <!-- Label di dalam QR area -->
+                <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;">
+                  <span style="font-family:'Lato',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.15em;color:rgba(26,18,8,0.35);text-transform:uppercase;">Scan di pintu masuk</span>
+                </div>
+              </div>
+
+              <!-- Gold glow shadow -->
+              <div style="position:absolute;inset:-4px;border-radius:16px;box-shadow:0 0 30px rgba(201,169,110,0.12);pointer-events:none;z-index:-1;"></div>
+            </div>
+          </div>
+
+          <!-- ID Code -->
+          <div style="text-align:center;margin-top:14px;">
+            <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(201,169,110,0.06);border:1px solid rgba(201,169,110,0.2);border-radius:999px;padding:5px 16px;">
+              <span style="font-family:'Lato',sans-serif;font-size:11px;letter-spacing:0.08em;color:rgba(201,169,110,0.5);">ID:</span>
+              <span style="font-family:monospace;font-size:11px;font-weight:700;letter-spacing:0.12em;color:rgba(201,169,110,0.7);" id="kode-id">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── BOTTOM DIVIDER ── -->
+        <div style="margin-top:28px;margin-bottom:20px;">
+          <div class="gold-divider"></div>
+        </div>
+
+        <!-- ── CLOSING ── -->
+        <div style="text-align:center;">
+          <p class="font-cormorant" style="font-size:15px;font-style:italic;color:rgba(201,169,110,0.5);line-height:1.8;">
+            Merupakan suatu kehormatan bagi kami<br>atas kehadiran Bapak/Ibu/Saudara/i
+          </p>
+          <div style="margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <div class="pulse-dot" style="opacity:0.5;"></div>
+            <span class="font-cormorant gold-gradient" style="font-size:14px;font-style:italic;">Hormat kami, Keluarga Besar</span>
+            <div class="pulse-dot" style="opacity:0.5;"></div>
+          </div>
+          <div class="font-playfair gold-gradient" style="font-size:18px;font-weight:600;margin-top:4px;">Rizky & Salsabila</div>
+        </div>
+
+      </div>
+      <!-- END CARD -->
+
+      <!-- ── BOTTOM NOTE ── -->
+      <div style="text-align:center;margin-top:20px;padding:0 16px;">
+        <p style="font-family:'Lato',sans-serif;font-size:11px;color:rgba(201,169,110,0.25);letter-spacing:0.08em;">
+          Undangan ini dibuat khusus untuk Anda • Harap tidak disebarluaskan
+        </p>
+      </div>
+
+    </div>
+  </div>
+<script>
+// ── FIREBASE CONFIG ──
+const firebaseConfig = {
+  apiKey: "AIzaSyDgywfOZvdM7oJ1RYXHOBfrFlzdbCsTpWI",
+  authDomain: "tamu-undangan-ebd82.firebaseapp.com",
+  projectId: "tamu-undangan-ebd82",
+  storageBucket: "tamu-undangan-ebd82.firebasestorage.app",
+  messagingSenderId: "293509659075",
+  appId: "1:293509659075:web:8ddc49b398070e45b2e576",
+  databaseURL: "https://tamu-undangan-ebd82-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ── AMBIL ID DARI URL ──
+const params = new URLSearchParams(window.location.search);
+const guestId = params.get('id');
+
+function setGuestData(g) {
+  // Nama tamu
+  const namaEl = document.getElementById('nama-tamu');
+  if (namaEl) namaEl.textContent = g.nama || 'Tamu Undangan';
+
+  // ID code
+  const idEl = document.getElementById('kode-id');
+  if (idEl) idEl.textContent = g.id || '—';
+
+  // Generate QR Code
+  const qrWrap = document.getElementById('qr-placeholder');
+  if (qrWrap) {
+    qrWrap.innerHTML = '';
+    const qrData = JSON.stringify({ id: g.id, nama: g.nama });
+    new QRCode(qrWrap, {
+      text: qrData,
+      width: 160,
+      height: 160,
+      colorDark: '#1A1208',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+    // Styling QR agar center
+    qrWrap.style.display = 'flex';
+    qrWrap.style.alignItems = 'center';
+    qrWrap.style.justifyContent = 'center';
+  }
+}
+
+function showError(msg) {
+  const namaEl = document.getElementById('nama-tamu');
+  if (namaEl) {
+    namaEl.textContent = msg;
+    namaEl.style.fontSize = '14px';
+    namaEl.style.opacity = '0.5';
+  }
+}
+
+if (!guestId) {
+  showError('Link tidak valid');
+} else {
+  // Cari tamu berdasarkan field id (bukan key Firebase)
+  db.ref('tamu').orderByChild('id').equalTo(guestId).once('value', snap => {
+    if (!snap.exists()) {
+      showError('Tamu tidak ditemukan');
+      return;
+    }
+    snap.forEach(child => {
+      setGuestData(child.val());
+    });
+  }).catch(() => showError('Gagal memuat data'));
+}
+</script>
+</body>
+</html>
