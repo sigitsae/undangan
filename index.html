@@ -6,6 +6,8 @@
   <title>Admin Panel — Tamu Undangan</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#c2410c">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -1112,6 +1114,15 @@ window.addEventListener('resize',checkDashGrid); checkDashGrid();
 if (document.getElementById('login-screen')) document.getElementById('login-screen').style.display = 'none';
 if (document.getElementById('app')) document.getElementById('app').style.display = 'block';
 startClock(); initData();
+
+// Register service worker for PWA support
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('Service worker registered:', reg.scope))
+      .catch(err => console.warn('Service worker registration failed:', err));
+  });
+}
 </script>
 </body>
 </html>
