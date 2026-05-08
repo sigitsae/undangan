@@ -1105,10 +1105,21 @@ function closeSidebar(){
 function checkMobile(){
   const toggle = document.getElementById('sidebar-toggle');
   const isMobile = window.innerWidth <= 900;
-  toggle.style.display = isMobile ? 'flex' : 'none';
+  if (toggle) toggle.style.display = isMobile ? 'flex' : 'none';
   if (!isMobile) closeSidebar();
 }
-window.addEventListener('resize',checkMobile); checkMobile();
+
+function initApp() {
+  if (document.getElementById('login-screen')) document.getElementById('login-screen').style.display = 'none';
+  if (document.getElementById('app')) document.getElementById('app').style.display = 'block';
+  startClock();
+  initData();
+  checkMobile();
+  checkDashGrid();
+  window.addEventListener('resize', checkMobile);
+  window.addEventListener('resize', checkDashGrid);
+}
+document.addEventListener('DOMContentLoaded', initApp);
 
 // ═══════════════════════════
 // TOAST
@@ -1127,12 +1138,6 @@ function showToast(msg,type='success'){
 // ═══════════════════════════
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function checkDashGrid(){const g=document.getElementById('dash-grid');if(g)g.style.gridTemplateColumns=window.innerWidth<720?'1fr':'1fr 1fr';}
-window.addEventListener('resize',checkDashGrid); checkDashGrid();
-
-// Auto bypass login for now
-if (document.getElementById('login-screen')) document.getElementById('login-screen').style.display = 'none';
-if (document.getElementById('app')) document.getElementById('app').style.display = 'block';
-startClock(); initData();
 
 // Register service worker for PWA support
 if ('serviceWorker' in navigator) {
