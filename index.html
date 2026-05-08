@@ -1119,7 +1119,11 @@ function initApp() {
   window.addEventListener('resize', checkMobile);
   window.addEventListener('resize', checkDashGrid);
 }
-document.addEventListener('DOMContentLoaded', initApp);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 
 // ═══════════════════════════
 // TOAST
